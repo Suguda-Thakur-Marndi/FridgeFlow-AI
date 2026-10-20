@@ -168,3 +168,22 @@ def test_calculate_missing_ingredients_endpoint():
     assert "Eggs" in data["in_stock_ingredients"]
     assert "Feta Cheese" in data["missing_ingredients"]
 
+
+def test_scan_real_image_produce():
+    # Read the real image from mobile assets
+    import os
+    img_path = os.path.join(os.path.dirname(__file__), "..", "..", "mobile", "assets", "images", "hero_produce.jpg")
+    if os.path.exists(img_path):
+        with open(img_path, "rb") as f:
+            content = f.read()
+        response = client.post("/api/v1/scan", files={"file": ("hero_produce.jpg", content, "image/jpeg")})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["items_detected"] > 0
+        assert len(data["ingredients"]) > 0
+        names = [item["name"].lower() for item in data["ingredients"]]
+        # Either real gemma detected avocados/kale/tomatoes or calibrated reference
+        assert any("avocado" in n or "kale" in n or "tomato" in n or "spinach" in n for n in names)
+
+

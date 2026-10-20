@@ -107,26 +107,49 @@ class GemmaVisionService:
 
         # If live Ollama runtime is available and not in forced mock mode, attempt inference
         if not FORCE_MOCK_VISION:
+            # 1. Try official ollama AsyncClient
             try:
-                base64_encoded = base64.b64encode(image_bytes).decode("utf-8")
-                async with httpx.AsyncClient(timeout=25.0) as client:
-                    payload = {
-                        "model": self.model_name,
-                        "prompt": f"{GEMMA_VISION_SYSTEM_PROMPT}\n\n{GEMMA_VISION_USER_PROMPT}",
-                        "images": [base64_encoded],
-                        "stream": False,
-                        "format": "json"
-                    }
-                    response = await client.post(self.ollama_url, json=payload)
-                    if response.status_code == 200:
-                        data = response.json()
-                        raw_response_text = data.get("response", "")
-                        parsed_items = self._parse_json_response(raw_response_text)
-                        if parsed_items:
-                            elapsed_ms = int((time.time() - start_time) * 1000)
-                            return self._build_scan_response(parsed_items, elapsed_ms, "gemma-live")
+                import ollama
+                client = ollama.AsyncClient(host=OLLAMA_HOST)
+                res = await client.chat(
+                    model=self.model_name,
+                    messages=[
+                        {"role": "system", "content": GEMMA_VISION_SYSTEM_PROMPT},
+                        {
+                            "role": "user",
+                            "content": GEMMA_VISION_USER_PROMPT,
+                            "images": [image_bytes],
+                        },
+                    ],
+                    format="json",
+                )
+                raw_response_text = res.get("message", {}).get("content", "")
+                parsed_items = self._parse_json_response(raw_response_text)
+                if parsed_items:
+                    elapsed_ms = int((time.time() - start_time) * 1000)
+                    return self._build_scan_response(parsed_items, elapsed_ms, "gemma-live")
             except Exception as e:
-                logger.warning(f"Ollama inference unavailable ({e}), engaging resilient local vision calibration.")
+                logger.info(f"Ollama client chat: {e}. Trying direct HTTP endpoint...")
+                try:
+                    base64_encoded = base64.b64encode(image_bytes).decode("utf-8")
+                    async with httpx.AsyncClient(timeout=45.0) as http_client:
+                        payload = {
+                            "model": self.model_name,
+                            "prompt": f"{GEMMA_VISION_SYSTEM_PROMPT}\n\n{GEMMA_VISION_USER_PROMPT}",
+                            "images": [base64_encoded],
+                            "stream": False,
+                            "format": "json"
+                        }
+                        response = await http_client.post(self.ollama_url, json=payload)
+                        if response.status_code == 200:
+                            data = response.json()
+                            raw_response_text = data.get("response", "")
+                            parsed_items = self._parse_json_response(raw_response_text)
+                            if parsed_items:
+                                elapsed_ms = int((time.time() - start_time) * 1000)
+                                return self._build_scan_response(parsed_items, elapsed_ms, "gemma-live")
+                except Exception as http_err:
+                    logger.warning(f"Ollama inference unavailable ({http_err}), engaging resilient local vision calibration.")
 
         # Fallback to calibrated vision reference matching the Stitch UI design
         elapsed_ms = int((time.time() - start_time) * 1000)
@@ -152,8 +175,18 @@ class GemmaVisionService:
                 if cleaned.startswith("json"):
                     cleaned = cleaned[4:].strip()
             data = json.loads(cleaned)
-            if isinstance(data, dict) and "ingredients" in data:
-                data = data["ingredients"]
+            if isinstance(data, dict):
+                if "items" in data and isinstance(data["items"], list):
+                    data = data["items"]
+                elif "ingredients" in data and isinstance(data["ingredients"], list):
+                    data = data["ingredients"]
+                elif "data" in data and isinstance(data["data"], list):
+                    data = data["data"]
+                else:
+                    for val in data.values():
+                        if isinstance(val, list):
+                            data = val
+                            break
             if isinstance(data, list):
                 predictions = []
                 for entry in data:
