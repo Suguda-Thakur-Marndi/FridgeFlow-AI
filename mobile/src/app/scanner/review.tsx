@@ -93,7 +93,14 @@ const INITIAL_REVIEW_ITEMS: RecognizedItemReview[] = [
 
 export default function ReviewScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ data?: string }>();
+  const params = useLocalSearchParams<{
+    data?: string;
+    modelName?: string;
+    isLive?: string;
+  }>();
+
+  const isLive = params.isLive === 'true';
+  const modelName = params.modelName || (isLive ? 'Gemma 3 (Live)' : 'Calibrated Reference Profile');
 
   const [items, setItems] = useState<RecognizedItemReview[]>(() => {
     if (params.data) {
@@ -198,9 +205,21 @@ export default function ReviewScreen() {
       >
         {/* Title & Intro Section */}
         <View style={styles.introSection}>
-          <View style={styles.scanCompleteBadge}>
-            <MaterialIcons name="auto-awesome" size={14} color={CulinaryColors.onSecondaryContainer} />
-            <Text style={styles.scanCompleteText}>VISION AI SCAN COMPLETE</Text>
+          <View style={[
+            styles.scanCompleteBadge,
+            isLive ? { backgroundColor: CulinaryColors.primaryFixed } : { backgroundColor: CulinaryColors.secondaryContainer }
+          ]}>
+            <MaterialIcons
+              name={isLive ? "auto-awesome" : "bookmark-border"}
+              size={14}
+              color={isLive ? CulinaryColors.primary : CulinaryColors.onSecondaryContainer}
+            />
+            <Text style={[
+              styles.scanCompleteText,
+              isLive ? { color: CulinaryColors.primary } : { color: CulinaryColors.onSecondaryContainer }
+            ]}>
+              {isLive ? `LIVE AI: ${modelName.toUpperCase()}` : `REFERENCE PROFILE: ${modelName.toUpperCase()}`}
+            </Text>
           </View>
           <Text style={styles.headline}>Here's what we found</Text>
           <Text style={styles.subheadline}>
@@ -214,9 +233,13 @@ export default function ReviewScreen() {
             <MaterialIcons name="info" size={18} color={CulinaryColors.tertiaryContainer} />
           </View>
           <View style={styles.tipTextCol}>
-            <Text style={styles.tipTitle}>FRIENDLY KITCHEN TIP</Text>
+            <Text style={styles.tipTitle}>
+              {isLive ? 'LIVE MODEL INFERENCE' : 'OFFLINE CALIBRATION ACTIVE'}
+            </Text>
             <Text style={styles.tipBody}>
-              AI suggestions can be inaccurate. Review and adjust quantities or shelf-life before saving.
+              {isLive
+                ? 'Processed by live open-weight Gemma vision model. Detections under 85% confidence are flagged for review.'
+                : 'Offline reference items loaded (calibrated with Google Stitch scenario). Connect to Ollama (ollama run gemma3:4b) for live inference.'}
             </Text>
           </View>
         </View>

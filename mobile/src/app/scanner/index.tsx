@@ -117,12 +117,16 @@ export default function ScannerScreen() {
     setScanError(null);
 
     try {
-      const detected = await ApiService.scanImage(previewUri);
+      const result = await ApiService.scanImage(previewUri);
       setIsProcessing(false);
       // Navigate to review screen with results encoded
       router.push({
         pathname: '/scanner/review',
-        params: { data: JSON.stringify(detected) },
+        params: {
+          data: JSON.stringify(result.ingredients),
+          modelName: result.modelName,
+          isLive: result.isLive ? 'true' : 'false',
+        },
       });
     } catch (e: any) {
       setIsProcessing(false);

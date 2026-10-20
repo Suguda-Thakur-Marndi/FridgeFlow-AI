@@ -18,6 +18,7 @@ class IngredientPrediction(BaseModel):
 class ScanResponse(BaseModel):
     status: str = Field(default="success")
     model_name: str = Field(default="gemma-3-4b-it / paligemma-2")
+    is_live_model: bool = Field(default=False, description="True if inference ran on live Gemma model, False if offline reference profile")
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     items_detected: int = Field(...)
     needs_review_count: int = Field(default=0)

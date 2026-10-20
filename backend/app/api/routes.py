@@ -114,6 +114,10 @@ async def scan_fridge_image(
     if len(contents) == 0:
         raise HTTPException(status_code=400, detail="Uploaded image is empty.")
 
+    MAX_IMAGE_SIZE_BYTES = 15 * 1024 * 1024  # 15 MB limit
+    if len(contents) > MAX_IMAGE_SIZE_BYTES:
+        raise HTTPException(status_code=413, detail="Image file exceeds maximum allowed size of 15MB.")
+
     try:
         result = await vision_service.analyze_image_bytes(contents, filename=file.filename or "upload.jpg")
         return result

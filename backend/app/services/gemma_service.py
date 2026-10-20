@@ -159,10 +159,11 @@ class GemmaVisionService:
         return ScanResponse(
             status="success",
             model_name=f"{self.model_name} (Calibrated Zero-Waste Profile)",
+            is_live_model=False,
             items_detected=len(items),
             needs_review_count=needs_review,
             ingredients=items,
-            raw_summary="Detected fresh greens, dairy items, eggs, and produce with shelf-life metrics.",
+            raw_summary="Calibrated zero-waste reference dataset.",
             processing_time_ms=elapsed_ms or 320
         )
 
@@ -209,12 +210,14 @@ class GemmaVisionService:
 
     def _build_scan_response(self, items: List[IngredientPrediction], elapsed_ms: int, model_mode: str) -> ScanResponse:
         needs_review = sum(1 for it in items if it.needs_review)
+        is_live = (model_mode == "gemma-live")
         return ScanResponse(
             status="success",
             model_name=f"{self.model_name} ({model_mode})",
+            is_live_model=is_live,
             items_detected=len(items),
             needs_review_count=needs_review,
             ingredients=items,
-            raw_summary=f"Successfully extracted {len(items)} items using Gemma vision.",
+            raw_summary=f"Successfully extracted {len(items)} items using Gemma vision." if is_live else "Calibrated zero-waste reference dataset.",
             processing_time_ms=elapsed_ms
         )

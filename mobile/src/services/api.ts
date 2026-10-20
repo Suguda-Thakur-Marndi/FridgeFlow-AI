@@ -5,6 +5,7 @@ import { RecognizedItemReview, Recipe } from '@/types';
 export interface ScanApiResponse {
   status: string;
   model_name: string;
+  is_live_model?: boolean;
   timestamp: string;
   items_detected: number;
   needs_review_count: number;
@@ -21,6 +22,12 @@ export interface ScanApiResponse {
   }>;
   raw_summary?: string;
   processing_time_ms: number;
+}
+
+export interface ScanResult {
+  ingredients: RecognizedItemReview[];
+  modelName: string;
+  isLive: boolean;
 }
 
 export const ApiService = {
@@ -45,7 +52,7 @@ export const ApiService = {
     }
   },
 
-  async scanImage(imageUri: string): Promise<RecognizedItemReview[]> {
+  async scanImage(imageUri: string): Promise<ScanResult> {
     const baseUrl = await PreferencesService.getBackendUrl();
     const formData = new FormData();
 
@@ -81,7 +88,7 @@ export const ApiService = {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s for vision model inference
+      const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s aligned with backend inference timeout
 
       const response = await fetch(`${baseUrl}/api/v1/scan`, {
         method: 'POST',
@@ -98,7 +105,7 @@ export const ApiService = {
       }
 
       const data: ScanApiResponse = await response.json();
-      return (data.ingredients || []).map((it, idx) => ({
+      const items = (data.ingredients || []).map((it, idx) => ({
         id: `detected-${Date.now()}-${idx}`,
         name: it.name,
         category: it.category || 'Produce',
@@ -110,83 +117,93 @@ export const ApiService = {
         flagged: it.flagged || false,
         notes: it.notes,
       }));
+
+      return {
+        ingredients: items,
+        modelName: data.model_name || 'Gemma 3 (4B Multimodal)',
+        isLive: Boolean(data.is_live_model),
+      };
     } catch (error: any) {
       console.warn('Backend scan failed, using calibrated offline model:', error?.message);
       // Fallback matching the Stitch design
-      return [
-        {
-          id: 'rec-1',
-          name: 'Baby Spinach',
-          category: 'Produce',
-          confidence: 0.98,
-          estimated_shelf_life_days: 3,
-          quantity: 1,
-          unit: 'bag (150g)',
-          needs_review: false,
-          flagged: false,
-          notes: 'Best within 3 days (Expiring soon)',
-        },
-        {
-          id: 'rec-2',
-          name: 'Eggs (Organic)',
-          category: 'Dairy & Egg',
-          confidence: 0.95,
-          estimated_shelf_life_days: 10,
-          quantity: 6,
-          unit: 'large',
-          needs_review: false,
-          flagged: false,
-          notes: 'Best within 10 days',
-        },
-        {
-          id: 'rec-3',
-          name: 'Greek Yogurt',
-          category: 'Dairy & Egg',
-          confidence: 0.84,
-          estimated_shelf_life_days: 5,
-          quantity: 1,
-          unit: '500g tub',
-          needs_review: true,
-          flagged: false,
-          notes: 'Best within 5 days',
-        },
-        {
-          id: 'rec-4',
-          name: 'Red Bell Pepper',
-          category: 'Produce',
-          confidence: 0.92,
-          estimated_shelf_life_days: 7,
-          quantity: 2,
-          unit: 'whole',
-          needs_review: false,
-          flagged: false,
-          notes: 'Best within 7 days',
-        },
-        {
-          id: 'rec-5',
-          name: 'Oat Milk (Barista)',
-          category: 'Dairy / Alt',
-          confidence: 0.76,
-          estimated_shelf_life_days: 4,
-          quantity: 1,
-          unit: '1L (Half full)',
-          needs_review: true,
-          flagged: true,
-          notes: 'Verify brand & open date',
-        },
-        {
-          id: 'rec-6',
-          name: 'Cheddar Cheese',
-          category: 'Dairy',
-          confidence: 0.9,
-          estimated_shelf_life_days: 14,
-          quantity: 1,
-          unit: '200g block',
-          needs_review: false,
-          flagged: false,
-          notes: 'Best within 14 days',
-        },
-      ];
+      return {
+        ingredients: [
+          {
+            id: 'rec-1',
+            name: 'Baby Spinach',
+            category: 'Produce',
+            confidence: 0.98,
+            estimated_shelf_life_days: 3,
+            quantity: 1,
+            unit: 'bag (150g)',
+            needs_review: false,
+            flagged: false,
+            notes: 'Best within 3 days (Expiring soon)',
+          },
+          {
+            id: 'rec-2',
+            name: 'Eggs (Organic)',
+            category: 'Dairy & Egg',
+            confidence: 0.95,
+            estimated_shelf_life_days: 10,
+            quantity: 6,
+            unit: 'large',
+            needs_review: false,
+            flagged: false,
+            notes: 'Best within 10 days',
+          },
+          {
+            id: 'rec-3',
+            name: 'Greek Yogurt',
+            category: 'Dairy & Egg',
+            confidence: 0.84,
+            estimated_shelf_life_days: 5,
+            quantity: 1,
+            unit: '500g tub',
+            needs_review: true,
+            flagged: false,
+            notes: 'Best within 5 days',
+          },
+          {
+            id: 'rec-4',
+            name: 'Red Bell Pepper',
+            category: 'Produce',
+            confidence: 0.92,
+            estimated_shelf_life_days: 7,
+            quantity: 2,
+            unit: 'whole',
+            needs_review: false,
+            flagged: false,
+            notes: 'Best within 7 days',
+          },
+          {
+            id: 'rec-5',
+            name: 'Oat Milk (Barista)',
+            category: 'Dairy / Alt',
+            confidence: 0.76,
+            estimated_shelf_life_days: 4,
+            quantity: 1,
+            unit: '1L (Half full)',
+            needs_review: true,
+            flagged: true,
+            notes: 'Verify brand & open date',
+          },
+          {
+            id: 'rec-6',
+            name: 'Cheddar Cheese',
+            category: 'Dairy',
+            confidence: 0.9,
+            estimated_shelf_life_days: 14,
+            quantity: 1,
+            unit: '200g block',
+            needs_review: false,
+            flagged: false,
+            notes: 'Best within 14 days',
+          },
+        ],
+        modelName: 'Offline Reference Profile (Calibrated for Stitch UI)',
+        isLive: false,
+      };
     }
   },
 

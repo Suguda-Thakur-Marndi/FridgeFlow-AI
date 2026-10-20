@@ -187,3 +187,29 @@ def test_scan_real_image_produce():
         assert any("avocado" in n or "kale" in n or "tomato" in n or "spinach" in n for n in names)
 
 
+def test_scan_oversized_image():
+    # 16 MB dummy payload
+    oversized_data = b"X" * (16 * 1024 * 1024)
+    response = client.post("/api/v1/scan", files={"file": ("huge.jpg", oversized_data, "image/jpeg")})
+    assert response.status_code == 413
+    assert "exceeds maximum allowed size" in response.json()["detail"]
+
+
+def test_scan_invalid_format():
+    response = client.post("/api/v1/scan", files={"file": ("invalid.txt", b"This is plain text, not an image.", "text/plain")})
+    assert response.status_code == 400
+    assert "not a valid image" in response.json()["detail"]
+
+
+def test_scan_is_live_flag():
+    img = Image.new("RGB", (50, 50), color=(10, 20, 30))
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    response = client.post("/api/v1/scan", files={"file": ("test.jpg", buf.getvalue(), "image/jpeg")})
+    assert response.status_code == 200
+    data = response.json()
+    assert "is_live_model" in data
+    assert isinstance(data["is_live_model"], bool)
+
+
+
