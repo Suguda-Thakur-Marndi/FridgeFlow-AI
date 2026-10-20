@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing & Coverage
+coverage/
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# Production Builds
+dist/
+build/
+.expo/
+*.apk
+*.aab
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Environment variables
+.env
+.env.local

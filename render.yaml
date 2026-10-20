@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: fridgeflow-ai-backend
+    runtime: python
+    region: oregon
+    plan: starter
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: GEMMA_MODEL_NAME
+        value: gemma3:4b
+      - key: FORCE_MOCK_VISION
+        value: "false"
+      - key: OLLAMA_HOST
+        value: http://localhost:11434
