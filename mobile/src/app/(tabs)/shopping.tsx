@@ -10,7 +10,7 @@ import {
   Share,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useIsFocused } from '@react-navigation/native';
+import { useSafeIsFocused } from '@/hooks/useSafeIsFocused';
 import { StorageRepository } from '@/storage/database';
 import { GroceryItemRow } from '@/components/GroceryItemRow';
 import { CulinaryHeader } from '@/components/CulinaryHeader';
@@ -18,7 +18,7 @@ import { CulinaryColors, Typography, Radii, Spacing, Elevation } from '@/constan
 import { GroceryItem } from '@/types';
 
 export default function ShoppingScreen() {
-  const isFocused = useIsFocused();
+  const isFocused = useSafeIsFocused();
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [quickAddText, setQuickAddText] = useState('');
 

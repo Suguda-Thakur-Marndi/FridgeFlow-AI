@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useIsFocused } from '@react-navigation/native';
+import { useSafeIsFocused } from '@/hooks/useSafeIsFocused';
 import { StorageRepository } from '@/storage/database';
 import { ApiService } from '@/services/api';
 import { RecipeCard } from '@/components/RecipeCard';
@@ -27,7 +27,7 @@ const RECIPE_FILTERS = [
 ];
 
 export default function RecipesScreen() {
-  const isFocused = useIsFocused();
+  const isFocused = useSafeIsFocused();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [activeFilter, setActiveFilter] = useState('All Recipes');
   const [promptInput, setPromptInput] = useState('');

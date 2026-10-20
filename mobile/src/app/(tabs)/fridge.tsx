@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useIsFocused } from '@react-navigation/native';
+import { useSafeIsFocused } from '@/hooks/useSafeIsFocused';
 import { useRouter } from 'expo-router';
 import { StorageRepository, formatFutureDate } from '@/storage/database';
 import { IngredientItemRow } from '@/components/IngredientItemRow';
@@ -23,7 +23,7 @@ const CATEGORIES = ['All', 'Expiring Soon', 'Produce', 'Dairy & Egg', 'Pantry'];
 
 export default function FridgeScreen() {
   const router = useRouter();
-  const isFocused = useIsFocused();
+  const isFocused = useSafeIsFocused();
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');

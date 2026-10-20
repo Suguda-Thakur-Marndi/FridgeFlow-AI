@@ -26,6 +26,14 @@
       ],
       "predictiveBackGestureEnabled": false
     },
+    "ios": {
+      "bundleIdentifier": "com.fridgeflow.ai",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "FridgeFlow AI uses your camera to scan fridge ingredients.",
+        "NSPhotoLibraryUsageDescription": "FridgeFlow AI uses your photo library to select fridge images for ingredient analysis."
+      }
+    },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"

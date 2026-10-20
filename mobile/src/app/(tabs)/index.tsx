@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useIsFocused } from '@react-navigation/native';
+import { useSafeIsFocused } from '@/hooks/useSafeIsFocused';
 import { StorageRepository } from '@/storage/database';
 import { PreferencesService } from '@/storage/preferences';
 import { CulinaryColors, Typography, Radii, Spacing, Elevation } from '@/constants/theme';
@@ -19,7 +19,7 @@ import { Ingredient } from '@/types';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const isFocused = useIsFocused();
+  const isFocused = useSafeIsFocused();
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
 
   useEffect(() => {

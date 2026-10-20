@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { PreferencesService } from '@/storage/preferences';
 import { RecognizedItemReview, Recipe } from '@/types';
 
@@ -48,17 +49,35 @@ export const ApiService = {
     const baseUrl = await PreferencesService.getBackendUrl();
     const formData = new FormData();
 
-    // Prepare image payload for React Native fetch
+    // Prepare image payload for React Native vs Web fetch
     const filename = imageUri.split('/').pop() || 'fridge_scan.jpg';
     const match = /\.(\w+)$/.exec(filename);
     const type = match ? `image/${match[1]}` : 'image/jpeg';
 
-    // @ts-ignore: React Native FormData file object signature
-    formData.append('file', {
-      uri: imageUri,
-      name: filename,
-      type,
-    });
+    if (Platform.OS === 'web') {
+      try {
+        if (imageUri.startsWith('blob:') || imageUri.startsWith('data:')) {
+          const res = await fetch(imageUri);
+          const blob = await res.blob();
+          formData.append('file', blob, filename);
+        } else {
+          // If demo or remote url, fetch and convert
+          const res = await fetch(imageUri);
+          const blob = await res.blob();
+          formData.append('file', blob, filename);
+        }
+      } catch (err) {
+        // Fallback for mock/demo
+        formData.append('file', new Blob([imageUri], { type: 'text/plain' }), filename);
+      }
+    } else {
+      // @ts-ignore: React Native FormData file object signature
+      formData.append('file', {
+        uri: imageUri,
+        name: filename,
+        type,
+      });
+    }
 
     try {
       const controller = new AbortController();

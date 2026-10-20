@@ -53,6 +53,10 @@ jobs:
         working-directory: ./mobile
         run: npm test
 
+      - name: Verify Web Production Export
+        working-directory: ./mobile
+        run: npx expo export --platform web
+
       - name: Verify Android Production Export
         working-directory: ./mobile
         run: npx expo export --platform android
