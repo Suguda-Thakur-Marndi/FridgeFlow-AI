@@ -37,6 +37,15 @@ async def root():
     }
 
 
+@app.get("/health")
+async def root_health():
+    return {
+        "status": "healthy",
+        "service": "FridgeFlow AI Vision Backend",
+        "version": "1.0.0"
+    }
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Global exception on {request.url}: {exc}")

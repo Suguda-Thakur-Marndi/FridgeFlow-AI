@@ -6,9 +6,11 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ImageBackground,
+  Image,
   ActivityIndicator,
   Alert,
   Platform,
+  Modal,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -35,7 +37,8 @@ export default function ScannerScreen() {
   const [flashIndex, setFlashIndex] = useState(0);
   const [stepIndex, setStepIndex] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [guideVisible, setGuideVisible] = useState(false);
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -49,13 +52,13 @@ export default function ScannerScreen() {
   };
 
   const handleCapturePhoto = async () => {
+    setScanError(null);
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        // Fall back to gallery or test image
         Alert.alert(
           'Camera Permission',
-          'Camera permission is needed to take live fridge photos. Would you like to select an image from your gallery instead?',
+          'Camera permission is required to capture live fridge photos. Would you like to select an existing photo from your gallery instead?',
           [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Open Gallery', onPress: handlePickFromGallery },
@@ -71,20 +74,20 @@ export default function ScannerScreen() {
       });
 
       if (!result.canceled && result.assets?.[0]?.uri) {
-        processScannedImage(result.assets[0].uri);
+        setPreviewUri(result.assets[0].uri);
       }
     } catch (err: any) {
       console.warn('Camera launch error, using demo scan:', err);
-      // Process using demo image
-      processScannedImage('demo://fridge_interior.jpg');
+      setPreviewUri('demo://fridge_interior.jpg');
     }
   };
 
   const handlePickFromGallery = async () => {
+    setScanError(null);
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Gallery access is required to upload a fridge photo.');
+        Alert.alert('Permission Needed', 'Gallery access is required to select a fridge photo.');
         return;
       }
 
@@ -94,18 +97,27 @@ export default function ScannerScreen() {
       });
 
       if (!result.canceled && result.assets?.[0]?.uri) {
-        processScannedImage(result.assets[0].uri);
+        setPreviewUri(result.assets[0].uri);
       }
     } catch (err: any) {
       console.warn('Gallery error:', err);
-      processScannedImage('demo://fridge_interior.jpg');
+      setPreviewUri('demo://fridge_interior.jpg');
     }
   };
 
-  const processScannedImage = async (uri: string) => {
+  const handleRetake = () => {
+    setPreviewUri(null);
+    setScanError(null);
+    setIsProcessing(false);
+  };
+
+  const handleSubmitForRecognition = async () => {
+    if (!previewUri) return;
     setIsProcessing(true);
+    setScanError(null);
+
     try {
-      const detected = await ApiService.scanImage(uri);
+      const detected = await ApiService.scanImage(previewUri);
       setIsProcessing(false);
       // Navigate to review screen with results encoded
       router.push({
@@ -114,13 +126,13 @@ export default function ScannerScreen() {
       });
     } catch (e: any) {
       setIsProcessing(false);
-      Alert.alert('Scan Completed', 'Review detected ingredients.', [
-        {
-          text: 'Proceed',
-          onPress: () => router.push('/scanner/review'),
-        },
-      ]);
+      const errorMsg = e?.message || 'Unable to connect to AI vision backend.';
+      setScanError(errorMsg);
     }
+  };
+
+  const handleProceedWithFallback = () => {
+    router.push('/scanner/review');
   };
 
   const currentFlash = FLASH_STATES[flashIndex];
@@ -128,114 +140,191 @@ export default function ScannerScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Viewfinder & Camera Viewport Section */}
-        <View style={styles.cameraFrame}>
-          <ImageBackground
-            source={{
-              uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCtykg0FPdhyNs5ZTVRvaUfuxNkfjwuHiyWUy7COPguAXnDjmij4PfI3S1UZiFEy8sHxbLAMZYiBQKv6jREDBqkFQkP-yB3kSWc04fQOaU9xH86uyZTI0Jd9UBwfL6YVSEmAbar0J833JLx1Ric3_MXzNkLl7yCFxp5KZuA44FW4sGIZzNy23p55Br5rwLVY2Tm-LcVDRI4SE79eg_8M7Cze7AtkuPwmjFUhqyLSr0eC_sY9puA0Qae',
-            }}
-            style={styles.backgroundImage}
-            resizeMode="cover"
+        {/* Top Controls Row */}
+        <View style={styles.topControlsRow}>
+          <TouchableOpacity
+            style={styles.utilityCircle}
+            onPress={() => router.back()}
+            accessibilityLabel="Cancel scanner"
           >
-            {/* Cinematic camera scrim */}
-            <View style={styles.cameraScrim} />
+            <MaterialIcons name="close" size={22} color={CulinaryColors.inverseOnSurface} />
+          </TouchableOpacity>
 
-            {/* Floating Top Utility Controls */}
-            <View style={styles.topControlsRow}>
-              {/* Dismiss / Close */}
-              <TouchableOpacity
-                style={styles.utilityCircle}
-                onPress={() => router.back()}
-                accessibilityLabel="Cancel scanner"
-              >
-                <MaterialIcons name="close" size={22} color={CulinaryColors.inverseOnSurface} />
-              </TouchableOpacity>
-
-              {/* Flash Cycle Toggle */}
-              <TouchableOpacity
-                style={styles.flashPill}
-                onPress={handleCycleFlash}
-                accessibilityLabel="Toggle flash mode"
-              >
-                <MaterialIcons name={currentFlash.icon} size={18} color={currentFlash.color} />
-                <Text style={styles.flashLabel}>{currentFlash.label.toUpperCase()}</Text>
-              </TouchableOpacity>
-
-              {/* Tips & Guidance */}
-              <TouchableOpacity
-                style={styles.utilityCircle}
-                onPress={() =>
-                  Alert.alert(
-                    'Vision Scanning Tips',
-                    '• Ensure the fridge interior light is on.\n• Open crisper drawers for better vegetable detection.\n• Keep bottles and cartons facing forward when possible.'
-                  )
-                }
-                accessibilityLabel="Scanning tips"
-              >
-                <MaterialIcons name="help-outline" size={22} color={CulinaryColors.inverseOnSurface} />
-              </TouchableOpacity>
+          {!previewUri ? (
+            <TouchableOpacity
+              style={styles.flashPill}
+              onPress={handleCycleFlash}
+              accessibilityLabel="Toggle flash mode"
+            >
+              <MaterialIcons name={currentFlash.icon} size={18} color={currentFlash.color} />
+              <Text style={styles.flashLabel}>{currentFlash.label.toUpperCase()}</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.previewActivePill}>
+              <MaterialIcons name="photo" size={16} color={CulinaryColors.primaryFixedDim} />
+              <Text style={styles.previewActiveText}>Image Ready</Text>
             </View>
+          )}
 
-            {/* Guidance Pill Overlay */}
-            <View style={styles.guidancePillContainer}>
-              <View style={styles.guidancePill}>
-                <MaterialIcons name="light-mode" size={16} color={CulinaryColors.primaryFixedDim} />
-                <Text style={styles.guidanceText}>
-                  Capture the inside of your fridge — ensure good lighting
-                </Text>
-              </View>
-            </View>
-
-            {/* Center Viewfinder with Laser Reticle */}
-            <ViewfinderReticle />
-
-            {/* Lower Shutter & Controls Dock */}
-            <View style={styles.lowerDock}>
-              {/* Left: Gallery Picker */}
-              <View style={styles.dockItem}>
-                <TouchableOpacity
-                  style={styles.dockCircleBtn}
-                  onPress={handlePickFromGallery}
-                  accessibilityLabel="Upload from gallery"
-                >
-                  <MaterialIcons name="photo-library" size={24} color="#ffffff" />
-                </TouchableOpacity>
-                <Text style={styles.dockItemLabel}>Upload</Text>
-              </View>
-
-              {/* Center: 72dp Circular Shutter Button */}
-              <View style={styles.dockItemCenter}>
-                <TouchableOpacity
-                  style={styles.shutterButton}
-                  onPress={handleCapturePhoto}
-                  disabled={isProcessing}
-                  activeOpacity={0.8}
-                  accessibilityLabel="Take picture"
-                >
-                  <View style={styles.shutterInnerCircle}>
-                    {isProcessing ? (
-                      <ActivityIndicator color={CulinaryColors.primary} size="small" />
-                    ) : (
-                      <MaterialIcons name="camera" size={30} color={CulinaryColors.primary} />
-                    )}
-                  </View>
-                </TouchableOpacity>
-              </View>
-
-              {/* Right: Manual Entry */}
-              <View style={styles.dockItem}>
-                <TouchableOpacity
-                  style={styles.dockCircleBtn}
-                  onPress={() => router.push('/(tabs)/fridge')}
-                  accessibilityLabel="Manual entry"
-                >
-                  <MaterialIcons name="qr-code-scanner" size={24} color="#ffffff" />
-                </TouchableOpacity>
-                <Text style={styles.dockItemLabel}>Manual</Text>
-              </View>
-            </View>
-          </ImageBackground>
+          <TouchableOpacity
+            style={styles.utilityCircle}
+            onPress={() =>
+              Alert.alert(
+                'Vision Scanning Tips',
+                '• Ensure the fridge interior light is on.\n• Open crisper drawers for better vegetable detection.\n• Keep labels and containers upright when possible.\n• Internet connection is needed to contact the Gemma vision backend.'
+              )
+            }
+            accessibilityLabel="Scanning tips"
+          >
+            <MaterialIcons name="help-outline" size={22} color={CulinaryColors.inverseOnSurface} />
+          </TouchableOpacity>
         </View>
+
+        {/* Viewfinder OR Image Preview Mode */}
+        {!previewUri ? (
+          <View style={styles.cameraFrame}>
+            <ImageBackground
+              source={{
+                uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCtykg0FPdhyNs5ZTVRvaUfuxNkfjwuHiyWUy7COPguAXnDjmij4PfI3S1UZiFEy8sHxbLAMZYiBQKv6jREDBqkFQkP-yB3kSWc04fQOaU9xH86uyZTI0Jd9UBwfL6YVSEmAbar0J833JLx1Ric3_MXzNkLl7yCFxp5KZuA44FW4sGIZzNy23p55Br5rwLVY2Tm-LcVDRI4SE79eg_8M7Cze7AtkuPwmjFUhqyLSr0eC_sY9puA0Qae',
+              }}
+              style={styles.backgroundImage}
+              resizeMode="cover"
+            >
+              <View style={styles.cameraScrim} />
+
+              {/* Guidance Pill Overlay */}
+              <View style={styles.guidancePillContainer}>
+                <View style={styles.guidancePill}>
+                  <MaterialIcons name="light-mode" size={16} color={CulinaryColors.primaryFixedDim} />
+                  <Text style={styles.guidanceText}>
+                    Capture the inside of your fridge — ensure good lighting
+                  </Text>
+                </View>
+              </View>
+
+              {/* Center Viewfinder with Laser Reticle */}
+              <ViewfinderReticle />
+
+              {/* Lower Shutter & Controls Dock */}
+              <View style={styles.lowerDock}>
+                {/* Left: Gallery Picker */}
+                <View style={styles.dockItem}>
+                  <TouchableOpacity
+                    style={styles.dockCircleBtn}
+                    onPress={handlePickFromGallery}
+                    accessibilityLabel="Upload from gallery"
+                  >
+                    <MaterialIcons name="photo-library" size={24} color="#ffffff" />
+                  </TouchableOpacity>
+                  <Text style={styles.dockItemLabel}>Upload</Text>
+                </View>
+
+                {/* Center: Circular Shutter Button */}
+                <View style={styles.dockItemCenter}>
+                  <TouchableOpacity
+                    style={styles.shutterButton}
+                    onPress={handleCapturePhoto}
+                    activeOpacity={0.8}
+                    accessibilityLabel="Take picture"
+                  >
+                    <View style={styles.shutterInnerCircle}>
+                      <MaterialIcons name="camera" size={30} color={CulinaryColors.primary} />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Right: Manual Inventory Entry */}
+                <View style={styles.dockItem}>
+                  <TouchableOpacity
+                    style={styles.dockCircleBtn}
+                    onPress={() => router.push('/(tabs)/fridge')}
+                    accessibilityLabel="Manual entry"
+                  >
+                    <MaterialIcons name="playlist-add" size={24} color="#ffffff" />
+                  </TouchableOpacity>
+                  <Text style={styles.dockItemLabel}>Manual</Text>
+                </View>
+              </View>
+            </ImageBackground>
+          </View>
+        ) : (
+          /* Preview and Confirm Screen */
+          <View style={styles.previewContainer}>
+            <View style={styles.previewImageCard}>
+              {previewUri.startsWith('demo://') ? (
+                <ImageBackground
+                  source={{
+                    uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCtykg0FPdhyNs5ZTVRvaUfuxNkfjwuHiyWUy7COPguAXnDjmij4PfI3S1UZiFEy8sHxbLAMZYiBQKv6jREDBqkFQkP-yB3kSWc04fQOaU9xH86uyZTI0Jd9UBwfL6YVSEmAbar0J833JLx1Ric3_MXzNkLl7yCFxp5KZuA44FW4sGIZzNy23p55Br5rwLVY2Tm-LcVDRI4SE79eg_8M7Cze7AtkuPwmjFUhqyLSr0eC_sY9puA0Qae',
+                  }}
+                  style={styles.previewImage}
+                  resizeMode="cover"
+                >
+                  <View style={styles.demoBadge}>
+                    <Text style={styles.demoBadgeText}>Sample Fridge Photo</Text>
+                  </View>
+                </ImageBackground>
+              ) : (
+                <Image
+                  source={{ uri: previewUri }}
+                  style={styles.previewImage}
+                  resizeMode="cover"
+                />
+              )}
+
+              {/* Status Banner */}
+              <View style={styles.previewOverlayBar}>
+                <View style={styles.networkBadge}>
+                  <MaterialIcons name="cloud-upload" size={14} color={CulinaryColors.primary} />
+                  <Text style={styles.networkBadgeText}>Ready to Send to Gemma Vision</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Error Message if API failed */}
+            {scanError && (
+              <View style={styles.errorBanner}>
+                <MaterialIcons name="error-outline" size={18} color={CulinaryColors.error} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.errorTitle}>Recognition Request Failed</Text>
+                  <Text style={styles.errorDetail}>
+                    {scanError}. You can retry or proceed with offline culinary predictions.
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Preview Action Buttons */}
+            <View style={styles.previewActionRow}>
+              <TouchableOpacity
+                style={styles.retakeBtn}
+                onPress={handleRetake}
+                activeOpacity={0.8}
+              >
+                <MaterialIcons name="refresh" size={20} color={CulinaryColors.primary} />
+                <Text style={styles.retakeBtnText}>Retake Photo</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.analyzeBtn}
+                onPress={handleSubmitForRecognition}
+                activeOpacity={0.85}
+              >
+                <MaterialIcons name="auto-awesome" size={20} color={CulinaryColors.white} />
+                <Text style={styles.analyzeBtnText}>Analyze with AI</Text>
+              </TouchableOpacity>
+            </View>
+
+            {scanError && (
+              <TouchableOpacity
+                style={styles.fallbackBtn}
+                onPress={handleProceedWithFallback}
+              >
+                <Text style={styles.fallbackBtnText}>Proceed with Sample / Offline Review</Text>
+                <MaterialIcons name="chevron-right" size={18} color={CulinaryColors.secondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
         {/* Real-time Gemma Vision Processing Drawer Card */}
         <View style={styles.drawerCard}>
@@ -250,7 +339,7 @@ export default function ScannerScreen() {
                 {isProcessing ? 'Analyzing with Gemma Vision...' : 'Finding your ingredients…'}
               </Text>
               <Text style={styles.drawerSubtitle}>
-                Zero-weight AI scene analysis with Gemma 2B/4B
+                Open-weight vision analysis powered by Gemma
               </Text>
             </View>
           </View>
@@ -267,14 +356,31 @@ export default function ScannerScreen() {
             </View>
           </View>
 
-          {/* Privacy Guarantee Banner */}
+          {/* Privacy & Network Transparency Banner */}
           <View style={styles.privacyBanner}>
-            <MaterialIcons name="verified-user" size={15} color={CulinaryColors.outline} />
+            <MaterialIcons name="wifi" size={14} color={CulinaryColors.outline} />
             <Text style={styles.privacyText}>
-              Requires network for vision inference. Raw imagery remains private and is never stored on external cloud servers.
+              Image inference requires internet or local network connectivity to the configured backend. Photos are never stored or monetized.
             </Text>
           </View>
         </View>
+
+        {/* Processing Modal Overlay */}
+        <Modal visible={isProcessing} transparent animationType="fade">
+          <View style={styles.modalBackdrop}>
+            <View style={styles.processingModalCard}>
+              <ActivityIndicator size="large" color={CulinaryColors.primary} />
+              <Text style={styles.processingModalTitle}>Gemma Vision Analyzing</Text>
+              <Text style={styles.processingModalDesc}>
+                Extracting visible food items, shelf life estimates &amp; crisper priorities...
+              </Text>
+              <View style={styles.modalStepBadge}>
+                <View style={styles.pulseLiveDot} />
+                <Text style={styles.modalStepText}>{SIMULATED_STEPS[stepIndex]}</Text>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -291,40 +397,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingTop: Platform.OS === 'android' ? 12 : 8,
   },
-  cameraFrame: {
-    flex: 1,
-    borderRadius: Radii.xl,
-    overflow: 'hidden',
-    backgroundColor: CulinaryColors.inverseSurface,
-    minHeight: 460,
-    ...Elevation.level2,
-  },
-  backgroundImage: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  cameraScrim: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(32, 41, 35, 0.4)',
-  },
   topControlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    paddingBottom: Spacing.sm,
   },
   utilityCircle: {
     width: 44,
     height: 44,
     borderRadius: Radii.full,
-    backgroundColor: 'rgba(32, 41, 35, 0.65)',
+    backgroundColor: 'rgba(32, 41, 35, 0.75)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   flashPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(32, 41, 35, 0.65)',
+    backgroundColor: 'rgba(32, 41, 35, 0.75)',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: Radii.full,
@@ -335,9 +426,40 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 0.5,
   },
+  previewActivePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: CulinaryColors.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: Radii.full,
+    gap: 6,
+  },
+  previewActiveText: {
+    ...Typography.labelSm,
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  cameraFrame: {
+    flex: 1,
+    borderRadius: Radii.xl,
+    overflow: 'hidden',
+    backgroundColor: CulinaryColors.inverseSurface,
+    minHeight: 440,
+    ...Elevation.level2,
+  },
+  backgroundImage: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  cameraScrim: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(32, 41, 35, 0.4)',
+  },
   guidancePillContainer: {
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
+    marginTop: Spacing.md,
   },
   guidancePill: {
     flexDirection: 'row',
@@ -398,12 +520,126 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  previewContainer: {
+    flex: 1,
+    gap: Spacing.sm,
+  },
+  previewImageCard: {
+    flex: 1,
+    borderRadius: Radii.xl,
+    overflow: 'hidden',
+    backgroundColor: CulinaryColors.inverseSurface,
+    position: 'relative',
+    ...Elevation.level2,
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  demoBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(32, 41, 35, 0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radii.full,
+    margin: Spacing.md,
+  },
+  demoBadgeText: {
+    ...Typography.labelSm,
+    color: '#ffffff',
+  },
+  previewOverlayBar: {
+    position: 'absolute',
+    bottom: Spacing.md,
+    left: Spacing.md,
+    right: Spacing.md,
+  },
+  networkBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radii.full,
+    gap: 8,
+    alignSelf: 'center',
+  },
+  networkBadgeText: {
+    ...Typography.labelSm,
+    color: CulinaryColors.primary,
+    fontWeight: '600',
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: '#FFDAD6',
+    padding: Spacing.sm,
+    borderRadius: Radii.md,
+  },
+  errorTitle: {
+    ...Typography.labelMd,
+    color: CulinaryColors.error,
+    fontWeight: '700',
+  },
+  errorDetail: {
+    ...Typography.bodySm,
+    color: CulinaryColors.error,
+    fontSize: 12,
+  },
+  previewActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  retakeBtn: {
+    flex: 1,
+    height: 48,
+    backgroundColor: CulinaryColors.surfaceContainerHigh,
+    borderRadius: Radii.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  retakeBtnText: {
+    ...Typography.labelMd,
+    color: CulinaryColors.primary,
+    fontWeight: '600',
+  },
+  analyzeBtn: {
+    flex: 1.5,
+    height: 48,
+    backgroundColor: CulinaryColors.primary,
+    borderRadius: Radii.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    ...Elevation.level2,
+  },
+  analyzeBtnText: {
+    ...Typography.labelMd,
+    color: CulinaryColors.white,
+    fontWeight: '700',
+  },
+  fallbackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    gap: 4,
+  },
+  fallbackBtnText: {
+    ...Typography.labelSm,
+    color: CulinaryColors.secondary,
+    fontWeight: '600',
+  },
   drawerCard: {
     backgroundColor: CulinaryColors.surfaceContainerLowest,
     borderRadius: Radii.xl,
     padding: Spacing.md,
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.sm,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
     ...Elevation.level1,
   },
   drawerHandle: {
@@ -483,5 +719,46 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 16,
     fontSize: 11,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  processingModalCard: {
+    width: '100%',
+    backgroundColor: CulinaryColors.surfaceContainerLowest,
+    borderRadius: Radii.xl,
+    padding: Spacing.xl,
+    alignItems: 'center',
+  },
+  processingModalTitle: {
+    ...Typography.headlineSm,
+    color: CulinaryColors.primary,
+    fontWeight: '700',
+    marginTop: Spacing.md,
+    marginBottom: 4,
+  },
+  processingModalDesc: {
+    ...Typography.bodySm,
+    color: CulinaryColors.onSurfaceVariant,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
+  },
+  modalStepBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: CulinaryColors.surfaceContainerLow,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8,
+    borderRadius: Radii.full,
+    gap: 8,
+  },
+  modalStepText: {
+    ...Typography.labelSm,
+    color: CulinaryColors.primary,
+    fontWeight: '600',
   },
 });

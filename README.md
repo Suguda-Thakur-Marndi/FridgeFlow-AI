@@ -76,6 +76,7 @@ fridgeflow-ai/
 │   ├── src/
 │   │   ├── app/                      # File-based navigation (Expo Router)
 │   │   │   ├── _layout.tsx           # Root Stack layout
+│   │   │   ├── onboarding.tsx        # Onboarding & Welcome Tour (Stitch Screen 1)
 │   │   │   ├── (tabs)/
 │   │   │   │   ├── _layout.tsx       # Bottom Tab Navigator
 │   │   │   │   ├── index.tsx         # Home Dashboard (Welcome & Overview)
@@ -83,7 +84,7 @@ fridgeflow-ai/
 │   │   │   │   ├── recipes.tsx       # AI Meal Planner (Crisper-First Recipes)
 │   │   │   │   └── shopping.tsx      # Smart Grocery List (Aisle-Synced)
 │   │   │   ├── scanner/
-│   │   │   │   ├── index.tsx         # AI Vision Scanner (Camera + Reticle)
+│   │   │   │   ├── index.tsx         # AI Vision Scanner (Camera + Reticle + Preview)
 │   │   │   │   └── review.tsx        # Recognized Review & Confirmation
 │   │   │   └── settings.tsx          # Settings, Privacy, & Backend URL Config
 │   │   ├── components/               # Reusable Culinary Ecology Components
@@ -100,27 +101,27 @@ fridgeflow-ai/
 │   │   │   └── api.ts                # FastAPI client & offline fallback
 │   │   ├── storage/
 │   │   │   ├── database.ts           # SQLite schema, migrations, CRUD, and seed
-│   │   │   └── preferences.ts        # AsyncStorage preferences (Backend URL)
+│   │   │   └── preferences.ts        # AsyncStorage preferences (Backend URL, Onboarded)
 │   │   └── types/
 │   │       └── index.ts              # Core TypeScript interfaces
 │   └── tests/
-│       └── business_logic.test.ts    # 21 unit tests (expiry, matching, deduplication)
+│       └── business_logic.test.ts    # 28 unit tests (expiry, matching, deduplication, URI)
 ├── backend/                          # Python FastAPI AI Vision Backend
 │   ├── Dockerfile                    # Containerization for Render
 │   ├── requirements.txt              # FastAPI, Pydantic v2, Uvicorn, Pillow, Pytest
 │   ├── app/
 │   │   ├── main.py                   # FastAPI app with CORS & error handling
 │   │   ├── api/
-│   │   │   └── routes.py             # /scan, /recipes, /substitutions, /health
+│   │   │   └── routes.py             # /scan, /recipes, /substitutions, /ingredients, /config
 │   │   ├── schemas/
-│   │   │   └── models.py             # Pydantic models for vision & recipes
+│   │   │   └── models.py             # Pydantic models for vision, recipes, config
 │   │   ├── services/
 │   │   │   ├── gemma_service.py      # Gemma vision pipeline & Ollama bridge
 │   │   │   └── recipe_engine.py      # Crisper-first matching & substitutions
 │   │   └── ai/
 │   │       └── gemma_prompts.py      # Gemma multimodal vision prompt engineering
 │   └── tests/
-│       └── test_api.py               # Pytest suite (9 tests covering endpoints)
+│       └── test_api.py               # Pytest suite (14 tests covering all endpoints)
 ├── render.yaml                       # Render Web Service Blueprint
 ├── .github/workflows/ci.yml          # GitHub Actions automated CI
 ├── .env.example

@@ -190,6 +190,23 @@ export function runTests(): { passed: number; failed: number; results: string[] 
   assert(categorizeAisle('Red Bell Pepper') === 'Produce', 'Bell Pepper mapped to Produce');
   assert(categorizeAisle('Brown Basmati Rice') === 'Pantry & Dry Goods', 'Rice mapped to Pantry');
 
+  // Test 7: Image URI Scheme Validation
+  function isValidScanUri(uri: string): boolean {
+    return uri.startsWith('file://') || uri.startsWith('content://') || uri.startsWith('demo://') || uri.startsWith('http');
+  }
+  assert(isValidScanUri('file:///data/user/0/cache/camera.jpg') === true, 'File URI is valid');
+  assert(isValidScanUri('content://media/external/images/media/42') === true, 'Android content URI is valid');
+  assert(isValidScanUri('demo://fridge_interior.jpg') === true, 'Demo placeholder URI is valid');
+  assert(isValidScanUri('random_text_not_a_uri') === false, 'Invalid URI rejected');
+
+  // Test 8: Missing Ingredients Calculation Format
+  const recipeNeeds = ['Baby Spinach', 'Avocados', 'Feta Cheese'];
+  const haveItems = ['Baby Spinach'];
+  const calc = evaluateRecipeMatch(recipeNeeds, haveItems);
+  assert(calc.missing.length === 2, '2 missing ingredients identified');
+  assert(calc.missing.includes('Avocados') && calc.missing.includes('Feta Cheese'), 'Correct missing item names');
+  assert(calc.matchPercentage === 33, '33% match percentage correctly calculated');
+
   return { passed, failed, results };
 }
 

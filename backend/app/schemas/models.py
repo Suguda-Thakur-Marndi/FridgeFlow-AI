@@ -70,3 +70,42 @@ class SubstitutionResponse(BaseModel):
     confidence: float
     ratio_instructions: str
     culinary_notes: str
+
+
+class MissingIngredientsRequest(BaseModel):
+    recipe_ingredients: List[str] = Field(..., description="Required ingredients for recipe")
+    available_ingredients: List[str] = Field(..., description="Currently available user ingredients")
+
+
+class MissingIngredientsResponse(BaseModel):
+    total_required: int
+    in_stock_count: int
+    missing_count: int
+    match_percentage: int
+    in_stock_ingredients: List[str]
+    missing_ingredients: List[str]
+
+
+class ClientConfigResponse(BaseModel):
+    app_name: str = "FridgeFlow AI"
+    model: str
+    version: str = "1.0.0"
+    max_upload_size_bytes: int = 10 * 1024 * 1024
+    supported_mime_types: List[str] = Field(default_factory=lambda: ["image/jpeg", "image/png", "image/webp"])
+    categories: List[str] = Field(
+        default_factory=lambda: [
+            "Vegetables",
+            "Fruits",
+            "Produce",
+            "Dairy & Egg",
+            "Meat & Seafood",
+            "Pantry & Dry Goods",
+            "Bakery",
+            "Beverage",
+            "Other",
+        ]
+    )
+    common_units: List[str] = Field(
+        default_factory=lambda: ["item", "bag", "whole", "tub", "bottle", "can", "carton", "bunch", "g", "kg", "ml", "L"]
+    )
+

@@ -195,6 +195,14 @@ export default function SettingsScreen() {
             <MaterialIcons name="restart-alt" size={18} color={CulinaryColors.primary} />
             <Text style={styles.resetBtnText}>Reload Stitch Sample Items</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.resetBtn, { marginTop: 8 }]}
+            onPress={() => router.push('/onboarding')}
+          >
+            <MaterialIcons name="explore" size={18} color={CulinaryColors.primary} />
+            <Text style={styles.resetBtnText}>Revisit Welcome &amp; Onboarding</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Open Source & Hacktoberfest Info */}

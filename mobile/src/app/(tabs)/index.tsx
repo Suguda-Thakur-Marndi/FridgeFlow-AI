@@ -13,6 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { StorageRepository } from '@/storage/database';
+import { PreferencesService } from '@/storage/preferences';
 import { CulinaryColors, Typography, Radii, Spacing, Elevation } from '@/constants/theme';
 import { Ingredient } from '@/types';
 
@@ -22,10 +23,15 @@ export default function HomeScreen() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
 
   useEffect(() => {
-    // Seed initial data if empty and load
-    StorageRepository.seedDataIfEmpty();
-    const items = StorageRepository.getAllIngredients();
-    setIngredients(items);
+    PreferencesService.isOnboarded().then((onboarded) => {
+      if (!onboarded) {
+        router.replace('/onboarding');
+        return;
+      }
+      StorageRepository.seedDataIfEmpty();
+      const items = StorageRepository.getAllIngredients();
+      setIngredients(items);
+    });
   }, [isFocused]);
 
   const expiringCount = ingredients.filter(

@@ -53,7 +53,17 @@ export const CulinaryColors = {
   outlineVariant: '#C0C9C2',
   inverseSurface: '#29332C',
   inverseOnSurface: '#E9F3EA',
+
+  // Common Convenience Aliases
+  white: '#FFFFFF',
+  forestGreen: '#04442F',
+  sageGreen: '#4B6546',
+  charcoal: '#202923',
+  border: '#C0C9C2',
+  mutedGrayGreen: '#707973',
 } as const;
+
+export const Colors = CulinaryColors;
 
 export const Typography = {
   displayLg: {
@@ -122,6 +132,8 @@ export const Radii = {
   xl: 24,
   full: 9999,
 };
+
+export const BorderRadius = Radii;
 
 export const Spacing = {
   xs: 4,

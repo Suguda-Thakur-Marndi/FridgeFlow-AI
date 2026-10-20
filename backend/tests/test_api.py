@@ -110,3 +110,61 @@ def test_scan_valid_image_bytes():
     assert "name" in first_item
     assert "confidence" in first_item
     assert "estimated_shelf_life_days" in first_item
+
+
+def test_root_health():
+    response = client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert "FridgeFlow AI" in data["service"]
+
+
+def test_client_config():
+    response = client.get("/api/v1/config")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["app_name"] == "FridgeFlow AI"
+    assert "model" in data
+    assert len(data["categories"]) >= 5
+    assert "image/jpeg" in data["supported_mime_types"]
+
+
+def test_reference_ingredients():
+    response = client.get("/api/v1/ingredients")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] > 0
+    assert len(data["items"]) == data["count"]
+    assert "Baby Spinach" in [item["name"] for item in data["items"]]
+    assert "Vegetables" in data["categories"]
+
+
+def test_recipe_suggest_alias():
+    payload = {
+        "available_ingredients": ["Baby Spinach", "Eggs", "Cheddar Cheese"],
+        "expiring_ingredients": ["Baby Spinach"],
+        "dietary_preferences": ["Vegetarian"]
+    }
+    response = client.post("/api/v1/recipes/suggest", json=payload)
+    assert response.status_code == 200
+    recipes = response.json()
+    assert len(recipes) >= 1
+    assert any("Skillet" in r["title"] or "Spinach" in r["title"] for r in recipes)
+
+
+def test_calculate_missing_ingredients_endpoint():
+    payload = {
+        "recipe_ingredients": ["Eggs", "Baby Spinach", "Feta Cheese", "Olive Oil"],
+        "available_ingredients": ["Eggs", "Baby Spinach"]
+    }
+    response = client.post("/api/v1/recipes/missing-ingredients", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_required"] == 4
+    assert data["in_stock_count"] == 2
+    assert data["missing_count"] == 2
+    assert data["match_percentage"] == 50
+    assert "Eggs" in data["in_stock_ingredients"]
+    assert "Feta Cheese" in data["missing_ingredients"]
+
