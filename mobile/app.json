@@ -28,6 +28,7 @@
     },
     "ios": {
       "bundleIdentifier": "com.fridgeflow.ai",
+      "buildNumber": "1",
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "FridgeFlow AI uses your camera to scan fridge ingredients.",
