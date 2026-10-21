@@ -119,16 +119,67 @@ export default function ReviewScreen() {
   const [newIngName, setNewIngName] = useState('');
   const [newIngCat, setNewIngCat] = useState('Produce');
 
+  // Edit item state
+  const [editingItem, setEditingItem] = useState<RecognizedItemReview | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editCategory, setEditCategory] = useState('Produce');
+  const [editQuantity, setEditQuantity] = useState('1');
+  const [editUnit, setEditUnit] = useState('item');
+  const [editShelfLife, setEditShelfLife] = useState('5');
+
   const handleAdjustCount = (id: string, delta: number) => {
-    setItems((prev) =>
-      prev.map((it) => {
+    setItems((prev) => {
+      const target = prev.find((it) => it.id === id);
+      if (target && target.quantity + delta <= 0) {
+        return prev.filter((it) => it.id !== id);
+      }
+      return prev.map((it) => {
         if (it.id === id) {
           const newQty = Math.max(1, Math.min(99, it.quantity + delta));
           return { ...it, quantity: newQty };
         }
         return it;
+      });
+    });
+  };
+
+  const handleRemoveItem = (id: string) => {
+    setItems((prev) => prev.filter((it) => it.id !== id));
+  };
+
+  const handleStartEdit = (item: RecognizedItemReview) => {
+    setEditingItem(item);
+    setEditName(item.name);
+    setEditCategory(item.category);
+    setEditQuantity(String(item.quantity));
+    setEditUnit(item.unit);
+    setEditShelfLife(String(item.estimated_shelf_life_days));
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingItem || !editName.trim()) return;
+    const parsedQty = parseFloat(editQuantity) || 1;
+    const parsedDays = parseInt(editShelfLife, 10) || 5;
+
+    setItems((prev) =>
+      prev.map((it) => {
+        if (it.id === editingItem.id) {
+          return {
+            ...it,
+            name: editName.trim(),
+            category: editCategory,
+            quantity: parsedQty,
+            unit: editUnit.trim() || 'item',
+            estimated_shelf_life_days: parsedDays,
+            notes: `Best within ${parsedDays} days`,
+            needs_review: false,
+            flagged: false,
+          };
+        }
+        return it;
       })
     );
+    setEditingItem(null);
   };
 
   const handleConfirmItem = (id: string) => {
@@ -368,32 +419,50 @@ export default function ReviewScreen() {
                     <Text style={styles.qtyLabel}>{item.unit}</Text>
                   </View>
 
-                  {needsReview || isFlagged ? (
+                  <View style={styles.actionsRightGroup}>
                     <TouchableOpacity
-                      style={styles.verifyBtn}
-                      onPress={() => handleConfirmItem(item.id)}
-                      activeOpacity={0.8}
+                      style={styles.iconActionBtn}
+                      onPress={() => handleStartEdit(item)}
+                      accessibilityLabel={`Edit ${item.name}`}
                     >
-                      <Text style={styles.verifyBtnText}>Confirm Item</Text>
-                      <MaterialIcons name="check" size={14} color={CulinaryColors.onPrimaryFixedVariant} />
+                      <MaterialIcons name="edit" size={15} color={CulinaryColors.primary} />
                     </TouchableOpacity>
-                  ) : (
-                    <View style={styles.stepperWrap}>
+
+                    <TouchableOpacity
+                      style={styles.iconActionBtn}
+                      onPress={() => handleRemoveItem(item.id)}
+                      accessibilityLabel={`Remove ${item.name}`}
+                    >
+                      <MaterialIcons name="delete-outline" size={17} color={CulinaryColors.error} />
+                    </TouchableOpacity>
+
+                    {needsReview || isFlagged ? (
                       <TouchableOpacity
-                        style={styles.stepBtn}
-                        onPress={() => handleAdjustCount(item.id, -1)}
+                        style={styles.verifyBtn}
+                        onPress={() => handleConfirmItem(item.id)}
+                        activeOpacity={0.8}
                       >
-                        <MaterialIcons name="remove" size={16} color={CulinaryColors.onSurface} />
+                        <Text style={styles.verifyBtnText}>Confirm</Text>
+                        <MaterialIcons name="check" size={14} color={CulinaryColors.onPrimaryFixedVariant} />
                       </TouchableOpacity>
-                      <Text style={styles.stepCount}>{item.quantity}</Text>
-                      <TouchableOpacity
-                        style={styles.stepBtn}
-                        onPress={() => handleAdjustCount(item.id, 1)}
-                      >
-                        <MaterialIcons name="add" size={16} color={CulinaryColors.onSurface} />
-                      </TouchableOpacity>
-                    </View>
-                  )}
+                    ) : (
+                      <View style={styles.stepperWrap}>
+                        <TouchableOpacity
+                          style={styles.stepBtn}
+                          onPress={() => handleAdjustCount(item.id, -1)}
+                        >
+                          <MaterialIcons name="remove" size={16} color={CulinaryColors.onSurface} />
+                        </TouchableOpacity>
+                        <Text style={styles.stepCount}>{item.quantity}</Text>
+                        <TouchableOpacity
+                          style={styles.stepBtn}
+                          onPress={() => handleAdjustCount(item.id, 1)}
+                        >
+                          <MaterialIcons name="add" size={16} color={CulinaryColors.onSurface} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
                 </View>
               </View>
             );
@@ -465,6 +534,69 @@ export default function ReviewScreen() {
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalAddBtn} onPress={handleAddMissingItem}>
                 <Text style={styles.modalAddText}>Add Item</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Item Modal */}
+      <Modal visible={Boolean(editingItem)} transparent={true} animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Edit Ingredient</Text>
+            <Text style={styles.modalFieldLabel}>Ingredient Name</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="e.g. Baby Spinach, Milk"
+              placeholderTextColor={CulinaryColors.outline}
+              value={editName}
+              onChangeText={setEditName}
+            />
+
+            <View style={styles.modalRow2Col}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.modalFieldLabel}>Quantity</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="1"
+                  placeholderTextColor={CulinaryColors.outline}
+                  value={editQuantity}
+                  onChangeText={setEditQuantity}
+                  keyboardType="numeric"
+                />
+              </View>
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={styles.modalFieldLabel}>Unit</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="item, bag, bottle"
+                  placeholderTextColor={CulinaryColors.outline}
+                  value={editUnit}
+                  onChangeText={setEditUnit}
+                />
+              </View>
+            </View>
+
+            <Text style={styles.modalFieldLabel}>Shelf-Life (Days)</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="5"
+              placeholderTextColor={CulinaryColors.outline}
+              value={editShelfLife}
+              onChangeText={setEditShelfLife}
+              keyboardType="numeric"
+            />
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setEditingItem(null)}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalAddBtn} onPress={handleSaveEdit}>
+                <Text style={styles.modalAddText}>Save Changes</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -935,5 +1067,28 @@ const styles = StyleSheet.create({
     ...Typography.labelMd,
     color: CulinaryColors.onPrimary,
     fontWeight: '700',
+  },
+  actionsRightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconActionBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: Radii.full,
+    backgroundColor: CulinaryColors.surfaceContainerLow,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalFieldLabel: {
+    ...Typography.labelSm,
+    color: CulinaryColors.onSurfaceVariant,
+    marginBottom: 4,
+    fontWeight: '600',
+  },
+  modalRow2Col: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

@@ -199,8 +199,8 @@ class GemmaVisionService:
                         estimated_shelf_life_days=int(entry.get("estimated_shelf_life_days", 5)),
                         quantity=float(entry.get("quantity", 1.0)),
                         unit=entry.get("unit", "item"),
-                        needs_review=conf < 0.85,
-                        flagged=entry.get("flagged", False),
+                        needs_review=bool(entry.get("needs_review", False)) or (conf < 0.85),
+                        flagged=bool(entry.get("flagged", False)),
                         notes=entry.get("notes")
                     ))
                 return predictions

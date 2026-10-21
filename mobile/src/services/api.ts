@@ -53,29 +53,41 @@ export const ApiService = {
   },
 
   async scanImage(imageUri: string): Promise<ScanResult> {
+    // Immediate offline return for demo URI placeholder
+    if (imageUri.startsWith('demo://')) {
+      return this.getOfflineReferenceProfile();
+    }
+
     const baseUrl = await PreferencesService.getBackendUrl();
     const formData = new FormData();
 
     // Prepare image payload for React Native vs Web fetch
-    const filename = imageUri.split('/').pop() || 'fridge_scan.jpg';
-    const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : 'image/jpeg';
+    let filename = 'fridge_scan.jpg';
+    let type = 'image/jpeg';
+
+    if (!imageUri.startsWith('data:') && !imageUri.startsWith('blob:')) {
+      const extracted = imageUri.split('/').pop() || 'fridge_scan.jpg';
+      const match = /\.(\w+)$/.exec(extracted);
+      if (match) {
+        filename = extracted;
+        type = `image/${match[1]}`;
+      }
+    } else if (imageUri.startsWith('data:')) {
+      const mimeMatch = imageUri.match(/^data:([^;]+);/);
+      if (mimeMatch) {
+        type = mimeMatch[1];
+        const ext = type.split('/')[1] || 'jpg';
+        filename = `fridge_scan.${ext}`;
+      }
+    }
 
     if (Platform.OS === 'web') {
       try {
-        if (imageUri.startsWith('blob:') || imageUri.startsWith('data:')) {
-          const res = await fetch(imageUri);
-          const blob = await res.blob();
-          formData.append('file', blob, filename);
-        } else {
-          // If demo or remote url, fetch and convert
-          const res = await fetch(imageUri);
-          const blob = await res.blob();
-          formData.append('file', blob, filename);
-        }
-      } catch (err) {
-        // Fallback for mock/demo
-        formData.append('file', new Blob([imageUri], { type: 'text/plain' }), filename);
+        const res = await fetch(imageUri);
+        const blob = await res.blob();
+        formData.append('file', blob, filename);
+      } catch (err: any) {
+        throw new Error(`Failed to load image file: ${err?.message || 'invalid file URI'}`);
       }
     } else {
       // @ts-ignore: React Native FormData file object signature
@@ -101,7 +113,12 @@ export const ApiService = {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`Vision API error: HTTP ${response.status}`);
+        let errorDetail = `HTTP ${response.status}`;
+        try {
+          const errJson = await response.json();
+          if (errJson.detail) errorDetail = errJson.detail;
+        } catch {}
+        throw new Error(errorDetail);
       }
 
       const data: ScanApiResponse = await response.json();
@@ -124,10 +141,14 @@ export const ApiService = {
         isLive: Boolean(data.is_live_model),
       };
     } catch (error: any) {
-      console.warn('Backend scan failed, using calibrated offline model:', error?.message);
-      // Fallback matching the Stitch design
-      return {
-        ingredients: [
+      console.warn('Backend scan failed:', error?.message);
+      throw error;
+    }
+  },
+
+  getOfflineReferenceProfile(): ScanResult {
+    return {
+      ingredients: [
           {
             id: 'rec-1',
             name: 'Baby Spinach',
@@ -204,7 +225,6 @@ export const ApiService = {
         modelName: 'Offline Reference Profile (Calibrated for Stitch UI)',
         isLive: false,
       };
-    }
   },
 
   async getRecipes(

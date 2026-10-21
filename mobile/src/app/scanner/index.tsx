@@ -82,8 +82,14 @@ export default function ScannerScreen() {
     }
   };
 
+  const webFileInputRef = React.useRef<any>(null);
+
   const handlePickFromGallery = async () => {
     setScanError(null);
+    if (Platform.OS === 'web' && webFileInputRef.current) {
+      webFileInputRef.current.click();
+      return;
+    }
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
@@ -105,10 +111,26 @@ export default function ScannerScreen() {
     }
   };
 
+  const handleWebFileSelect = (event: any) => {
+    const file = event.target?.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          setPreviewUri(e.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleRetake = () => {
     setPreviewUri(null);
     setScanError(null);
     setIsProcessing(false);
+    if (webFileInputRef.current) {
+      webFileInputRef.current.value = '';
+    }
   };
 
   const handleSubmitForRecognition = async () => {
@@ -312,9 +334,10 @@ export default function ScannerScreen() {
                 style={styles.analyzeBtn}
                 onPress={handleSubmitForRecognition}
                 activeOpacity={0.85}
+                accessibilityLabel="Analyze My Fridge"
               >
                 <MaterialIcons name="auto-awesome" size={20} color={CulinaryColors.white} />
-                <Text style={styles.analyzeBtnText}>Analyze with AI</Text>
+                <Text style={styles.analyzeBtnText}>Analyze My Fridge</Text>
               </TouchableOpacity>
             </View>
 
@@ -385,6 +408,18 @@ export default function ScannerScreen() {
             </View>
           </View>
         </Modal>
+
+        {Platform.OS === 'web' && (
+          // @ts-ignore
+          <input
+            type="file"
+            ref={webFileInputRef}
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleWebFileSelect}
+            data-testid="web-file-input"
+          />
+        )}
       </View>
     </SafeAreaView>
   );
