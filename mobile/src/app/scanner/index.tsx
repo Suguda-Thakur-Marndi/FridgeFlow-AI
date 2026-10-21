@@ -204,7 +204,7 @@ export default function ScannerScreen() {
             onPress={() =>
               Alert.alert(
                 'Vision Scanning Tips',
-                '• Ensure the fridge interior light is on.\n• Open crisper drawers for better vegetable detection.\n• Keep labels and containers upright when possible.\n• Internet connection is needed to contact the Gemma vision backend.'
+                '• Ensure the fridge interior light is on.\n• Open crisper drawers for better vegetable detection.\n• Keep labels and containers upright when possible.\n• 100% on-device vision runs completely offline without sending photos to any server.'
               )
             }
             accessibilityLabel="Scanning tips"
@@ -322,7 +322,7 @@ export default function ScannerScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.errorTitle}>Local Vision Processing Error</Text>
                   <Text style={styles.errorDetail}>
-                    {scanError}. You can retry or proceed with offline culinary predictions.
+                    {scanError}. Please retake the photo or retry on-device inference.
                   </Text>
                 </View>
               </View>
@@ -353,10 +353,10 @@ export default function ScannerScreen() {
             {scanError && (
               <TouchableOpacity
                 style={styles.fallbackBtn}
-                onPress={handleProceedWithFallback}
+                onPress={handleSubmitForRecognition}
               >
-                <Text style={styles.fallbackBtnText}>Proceed with Sample / Offline Review</Text>
-                <MaterialIcons name="chevron-right" size={18} color={CulinaryColors.secondary} />
+                <MaterialIcons name="refresh" size={18} color={CulinaryColors.error} />
+                <Text style={[styles.fallbackBtnText, { color: CulinaryColors.error, marginLeft: 6 }]}>Retry Local Inference</Text>
               </TouchableOpacity>
             )}
           </View>

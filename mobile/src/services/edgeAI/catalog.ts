@@ -1,6 +1,48 @@
 import { EdgeModelConfig } from './types';
 
 export const EDGE_MODEL_CATALOG: Record<string, EdgeModelConfig> = {
+  'bundled-vision-vlm': {
+    id: 'bundled-vision-vlm',
+    name: 'FridgeFlow Bundled Vision Neural Model (Pre-Bundled)',
+    family: 'MobileNetV2-FoodVision',
+    parameterCount: '2.26 Million',
+    quantization: 'INT8 Dynamic Quantized (TFL3)',
+    downloadSizeBytes: 0,
+    downloadSizeFormatted: '0 MB (Bundled in App)',
+    ramRequiredBytes: 120 * 1024 * 1024,
+    ramRequiredFormatted: '120 MB RAM',
+    license: 'Apache 2.0 (Permissive edge & commercial distribution)',
+    recommendedFor: 'Production default bundled on-device distribution for Web, Android, and iOS (Zero post-install download required)',
+    description: 'Pre-bundled on-device neural vision model with pre-trained MobileNetV2 backbone and multi-label ingredient classification head.',
+  },
+  'gemma-3-4b-it': {
+    id: 'gemma-3-4b-it',
+    name: 'Gemma 3 4B-IT (Quantized W4A16 / LiteRT-LM)',
+    family: 'Gemma 3 (Google)',
+    parameterCount: '4.3 Billion',
+    quantization: 'W4A16 / Q4_K_M GGUF',
+    downloadSizeBytes: 2700 * 1024 * 1024,
+    downloadSizeFormatted: '2.7 GB',
+    ramRequiredBytes: 3800 * 1024 * 1024,
+    ramRequiredFormatted: '3.8 GB RAM',
+    license: 'Gemma Terms of Use',
+    recommendedFor: 'Flagship mobile devices with 8GB+ RAM via Play Asset Delivery or desktop WebGPU with 16GB RAM',
+    description: 'High-accuracy Google multimodal model with native image tokens. Strong zero-shot recognition of diverse brands and packaging.',
+  },
+  'gemma-3-12b-it': {
+    id: 'gemma-3-12b-it',
+    name: 'Gemma 3 12B-IT (Quantized W4A16 / High-Accuracy)',
+    family: 'Gemma 3 (Google)',
+    parameterCount: '12 Billion',
+    quantization: 'W4A16 / Q4_K_M GGUF',
+    downloadSizeBytes: 7800 * 1024 * 1024,
+    downloadSizeFormatted: '7.8 GB',
+    ramRequiredBytes: 9400 * 1024 * 1024,
+    ramRequiredFormatted: '9.4 GB RAM',
+    license: 'Gemma Terms of Use',
+    recommendedFor: 'High-end developer workstations with 16GB+ VRAM (Cannot be bundled on mobile due to Apple 4GB & Google Play 4GB store limits)',
+    description: 'Maximum accuracy candidate. Outstanding multi-shelf reasoning, but strictly exceeds mobile store binary size limits.',
+  },
   'smolvlm-500m': {
     id: 'smolvlm-500m',
     name: 'SmolVLM 500M Instruct (Quantized)',
@@ -45,7 +87,7 @@ export const EDGE_MODEL_CATALOG: Record<string, EdgeModelConfig> = {
   },
 };
 
-export const DEFAULT_EDGE_MODEL_ID = 'smolvlm-500m';
+export const DEFAULT_EDGE_MODEL_ID = 'bundled-vision-vlm';
 
 // Knowledge base of common ingredients and their default shelf lives and categories
 export const CULINARY_KNOWLEDGE_BASE: Record<

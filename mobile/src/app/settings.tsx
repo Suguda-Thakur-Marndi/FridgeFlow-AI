@@ -190,7 +190,9 @@ export default function SettingsScreen() {
               <View style={styles.installedBadgeRow}>
                 <View style={styles.installedBadge}>
                   <MaterialIcons name="offline-pin" size={16} color={CulinaryColors.primary} />
-                  <Text style={styles.installedBadgeText}>Cached &amp; Ready Offline</Text>
+                  <Text style={styles.installedBadgeText}>
+                    {edgeStatus?.modelConfig.downloadSizeBytes === 0 ? 'Pre-Bundled in App • Ready Offline' : 'Cached & Ready Offline'}
+                  </Text>
                 </View>
                 <TouchableOpacity style={styles.deleteModelBtn} onPress={handleDeleteModel}>
                   <MaterialIcons name="delete-outline" size={16} color={CulinaryColors.error} />

@@ -100,7 +100,7 @@ export default function ReviewScreen() {
   }>();
 
   const isLive = params.isLive === 'true';
-  const modelName = params.modelName || (isLive ? 'Gemma 3 (Live)' : 'Calibrated Reference Profile');
+  const modelName = params.modelName || (isLive ? 'Bundled Vision Neural Model (Live)' : 'Calibrated Reference Profile');
 
   const [items, setItems] = useState<RecognizedItemReview[]>(() => {
     if (params.data) {
@@ -289,8 +289,8 @@ export default function ReviewScreen() {
             </Text>
             <Text style={styles.tipBody}>
               {isLive
-                ? 'Processed locally inside your device memory with zero network egress. Detections under 85% confidence are flagged for review.'
-                : 'Offline reference items loaded (calibrated with Google Stitch scenario). Connect on-device engine for live local inference.'}
+                ? 'Processed locally inside your device memory with zero network egress. Model confidence is a raw visual similarity score (uncalibrated). Ambiguous or occluded items are flagged for your confirmation.'
+                : 'Offline reference items loaded. On-device engine ready for local vision processing.'}
             </Text>
           </View>
         </View>

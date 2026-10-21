@@ -1,0 +1,48 @@
+{
+  "name": "FridgeFlow Bundled Vision Neural Model",
+  "model_id": "bundled-vision-vlm",
+  "version": "1.0.0-bundled",
+  "architecture": "MobileNetV2-FoodVision",
+  "parameter_count": "2.26 Million",
+  "quantization": "INT8 Dynamic Range Quantized FlatBuffer (TFL3)",
+  "runtime_backends": ["webgpu", "wasm", "litert", "coreml"],
+  "license": "Apache-2.0",
+  "bundled_distribution": true,
+  "requires_network_download": false,
+  "weight_files": [
+    {
+      "filename": "model_quantized.tflite",
+      "format": "tflite_flatbuffer",
+      "size_bytes": 2521568,
+      "sha256": "556788d92f443512c31cd0e3acc601bc3e16ffadce377a744826220ea3db4790"
+    },
+    {
+      "filename": "neural_head.json",
+      "format": "json_tensor_weights",
+      "size_bytes": 280556,
+      "sha256": "39514a537906a951c25bb1b7ea4377117b4ec2493cac072088e06b872f8cde24"
+    }
+  ],
+  "vision_encoder": {
+    "backbone": "mobilenet_v2_1.0_224",
+    "input_resolution": [224, 224, 3],
+    "feature_dim": 1280,
+    "normalization": "scale_0_to_1_rescaling"
+  },
+  "classification_head": {
+    "num_classes": 10,
+    "activation": "sigmoid",
+    "classes": [
+      { "id": 0, "name": "Baby Spinach", "category": "Produce", "shelfLifeDays": 3, "defaultUnit": "bag (150g)" },
+      { "id": 1, "name": "Eggs (Organic)", "category": "Dairy & Egg", "shelfLifeDays": 14, "defaultUnit": "large" },
+      { "id": 2, "name": "Milk", "category": "Dairy / Alt", "shelfLifeDays": 7, "defaultUnit": "1L" },
+      { "id": 3, "name": "Greek Yogurt", "category": "Dairy & Egg", "shelfLifeDays": 7, "defaultUnit": "500g tub" },
+      { "id": 4, "name": "Cheddar Cheese", "category": "Dairy", "shelfLifeDays": 14, "defaultUnit": "200g block" },
+      { "id": 5, "name": "Red Bell Pepper", "category": "Produce", "shelfLifeDays": 7, "defaultUnit": "whole" },
+      { "id": 6, "name": "Strawberry Jam", "category": "Pantry", "shelfLifeDays": 60, "defaultUnit": "pouch" },
+      { "id": 7, "name": "Butter", "category": "Dairy & Egg", "shelfLifeDays": 30, "defaultUnit": "pack" },
+      { "id": 8, "name": "Carrots", "category": "Produce", "shelfLifeDays": 14, "defaultUnit": "bag" },
+      { "id": 9, "name": "Mustard", "category": "Pantry", "shelfLifeDays": 60, "defaultUnit": "bottle" }
+    ]
+  }
+}

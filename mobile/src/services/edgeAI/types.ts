@@ -48,6 +48,41 @@ export interface LocalInferenceOptions {
   signal?: AbortSignal;
 }
 
+export type LocalModelAvailabilityStatus =
+  | 'ready'
+  | 'loading'
+  | 'unsupported_hardware'
+  | 'out_of_memory'
+  | 'corrupt_asset'
+  | 'not_bundled'
+  | 'error';
+
+export interface ValidatedIngredientPrediction {
+  name: string;
+  category: string;
+  confidence: number; // Raw model matching score (0.0 - 1.0); not calibrated probability
+  needs_review: boolean; // True if ambiguous (<0.85), occluded, or multi-item cluster
+  ambiguity_reason?: string;
+  is_occluded?: boolean;
+  bounding_box?: [number, number, number, number]; // [ymin, xmin, ymax, xmax]
+}
+
+export interface ModelMetadata {
+  identifier: string; // e.g. 'gemma-3-4b-it-int4' or 'bundled-vision-vlm'
+  version: string;    // e.g. '1.0.0-bundled'
+  family: string;     // e.g. 'Gemma 3' / 'SmolVLM'
+  runtime: EdgeEngineType;
+}
+
+export interface BundledLocalVisionResult {
+  ingredients: ValidatedIngredientPrediction[];
+  model: ModelMetadata;
+  inference_duration_ms: number;
+  status: LocalModelAvailabilityStatus;
+  error?: string;
+  uncalibrated_warning: string;
+}
+
 export interface LocalScanResult {
   ingredients: RecognizedItemReview[];
   modelName: string;
@@ -57,6 +92,9 @@ export interface LocalScanResult {
   deviceTier: DeviceHardwareTier;
   rawSummary?: string;
   modelId: string;
+  modelVersion?: string;
+  availabilityStatus?: LocalModelAvailabilityStatus;
+  validatedResult?: BundledLocalVisionResult;
 }
 
 export interface IEdgeVisionEngine {
@@ -67,3 +105,4 @@ export interface IEdgeVisionEngine {
   setModel(modelId: string): Promise<void>;
   analyzeFridgeImage(imageUri: string, options?: LocalInferenceOptions): Promise<LocalScanResult>;
 }
+

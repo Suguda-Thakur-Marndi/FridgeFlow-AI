@@ -1,0 +1,67 @@
+{
+  "dataset_version": "1.0.0",
+  "description": "Held-out real refrigerator benchmark dataset with human-verified labels for edge vision evaluation.",
+  "images": [
+    {
+      "id": "fridge_test_01",
+      "filename": "fridge_test_01_user_upload.jpg",
+      "scenario": "Domestic Multi-Shelf Refrigerator",
+      "ground_truth_items": [
+        { "name": "Eggs", "category": "Dairy & Egg", "is_occluded": false, "expected_review": false },
+        { "name": "Milk", "category": "Dairy / Alt", "is_occluded": false, "expected_review": false },
+        { "name": "Baby Spinach", "category": "Produce", "is_occluded": false, "expected_review": false },
+        { "name": "Greek Yogurt", "category": "Dairy & Egg", "is_occluded": true, "expected_review": true },
+        { "name": "Strawberry Jam", "category": "Pantry", "is_occluded": true, "expected_review": true },
+        { "name": "Red Bell Pepper", "category": "Produce", "is_occluded": false, "expected_review": false }
+      ]
+    },
+    {
+      "id": "fridge_test_02",
+      "filename": "fridge_test_02_produce_crisper.jpg",
+      "scenario": "Crisper Produce Drawer",
+      "ground_truth_items": [
+        { "name": "Baby Spinach", "category": "Produce", "is_occluded": false, "expected_review": false },
+        { "name": "Carrots", "category": "Produce", "is_occluded": false, "expected_review": false },
+        { "name": "Broccoli", "category": "Produce", "is_occluded": false, "expected_review": false },
+        { "name": "Bell Pepper", "category": "Produce", "is_occluded": false, "expected_review": false },
+        { "name": "Cilantro", "category": "Produce", "is_occluded": true, "expected_review": true }
+      ]
+    },
+    {
+      "id": "fridge_test_03",
+      "filename": "fridge_test_03_dairy_shelf.jpg",
+      "scenario": "Dairy & Egg Shelf",
+      "ground_truth_items": [
+        { "name": "Whole Milk", "category": "Dairy / Alt", "is_occluded": false, "expected_review": false },
+        { "name": "Organic Eggs", "category": "Dairy & Egg", "is_occluded": false, "expected_review": false },
+        { "name": "Cheddar Cheese", "category": "Dairy & Egg", "is_occluded": false, "expected_review": false },
+        { "name": "Greek Yogurt", "category": "Dairy & Egg", "is_occluded": false, "expected_review": false },
+        { "name": "Butter", "category": "Dairy & Egg", "is_occluded": false, "expected_review": false },
+        { "name": "Mustard", "category": "Pantry", "is_occluded": true, "expected_review": true }
+      ]
+    },
+    {
+      "id": "fridge_test_04",
+      "filename": "fridge_test_04_door_condiments.jpg",
+      "scenario": "Door Bins & Condiments",
+      "ground_truth_items": [
+        { "name": "Mayonnaise", "category": "Pantry", "is_occluded": false, "expected_review": false },
+        { "name": "Mustard", "category": "Pantry", "is_occluded": false, "expected_review": false },
+        { "name": "Strawberry Jam", "category": "Pantry", "is_occluded": false, "expected_review": false },
+        { "name": "Oat Milk", "category": "Dairy / Alt", "is_occluded": true, "expected_review": true },
+        { "name": "Salad Dressing", "category": "Pantry", "is_occluded": true, "expected_review": true }
+      ]
+    },
+    {
+      "id": "fridge_test_05",
+      "filename": "fridge_test_05_dim_lighting_occlusion.jpg",
+      "scenario": "Dim Lighting & Heavy Shelf Occlusion",
+      "ground_truth_items": [
+        { "name": "Greek Yogurt", "category": "Dairy & Egg", "is_occluded": true, "expected_review": true },
+        { "name": "Oat Milk", "category": "Dairy / Alt", "is_occluded": false, "expected_review": false },
+        { "name": "Baby Spinach", "category": "Produce", "is_occluded": true, "expected_review": true },
+        { "name": "Cheddar Cheese", "category": "Dairy", "is_occluded": true, "expected_review": true }
+      ]
+    }
+  ]
+}

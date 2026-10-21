@@ -8,6 +8,9 @@
     "scheme": "fridgeflow",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "android": {
       "package": "com.fridgeflow.ai",
       "versionCode": 1,

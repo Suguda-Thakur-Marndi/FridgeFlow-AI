@@ -32,15 +32,16 @@ async function runEdgeAITests() {
 
   // 2. Model Catalog & Status
   const status = await engine.getStatus();
-  assert(status.selectedModelId === DEFAULT_EDGE_MODEL_ID, 'Defaults to SmolVLM 500M');
-  assert(status.modelConfig.downloadSizeBytes > 0, 'Model catalog specifies non-zero download size');
+  assert(status.selectedModelId === DEFAULT_EDGE_MODEL_ID, 'Defaults to Bundled Vision VLM');
+  assert(status.isInstalled === true, 'Bundled model is pre-installed and ready on fresh start');
+  assert(status.modelConfig.downloadSizeBytes === 0, 'Bundled model requires 0 MB post-install download');
   assert(status.modelConfig.license.includes('Apache'), 'Model has permissive Apache 2.0 license');
 
   // 3. Model Switch
-  await engine.setModel('fridgevision-edge');
+  await engine.setModel('smolvlm-500m');
   const switchedStatus = await engine.getStatus();
-  assert(switchedStatus.selectedModelId === 'fridgevision-edge', 'Switches active model in catalog');
-  assert(switchedStatus.modelConfig.name.includes('FridgeVision'), 'Retrieves correct model configuration');
+  assert(switchedStatus.selectedModelId === 'smolvlm-500m', 'Switches active model in catalog');
+  assert(switchedStatus.modelConfig.downloadSizeBytes > 0, 'Standard optional model specifies download size');
 
   // 4. Model Installation & Progress Tracking
   let progressReported = 0;
@@ -57,14 +58,17 @@ async function runEdgeAITests() {
   assert(!deletedStatus.isInstalled, 'Clears model weights from local cache');
 
   // 6. Structured Local Inference Output
-  // Re-install for inference test
-  await engine.installModel('fridgevision-edge');
+  // Switch back to bundled model for inference
+  await engine.setModel('bundled-vision-vlm');
   const dummySvgDataUri = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="green" width="100" height="100"/></svg>';
 
   const scanResult = await engine.analyzeFridgeImage(dummySvgDataUri);
   assert(scanResult.isLive, 'Flags scan as live on-device AI inference');
   assert(scanResult.ingredients.length > 0, 'Returns non-empty ingredient predictions');
   assert(scanResult.inferenceTimeMs >= 0, 'Measures positive inference latency');
+  assert(scanResult.modelVersion === '1.0.0-bundled', 'Reports valid model version');
+  assert(Boolean(scanResult.validatedResult), 'Populates validatedResult schema');
+  assert(typeof scanResult.validatedResult?.uncalibrated_warning === 'string', 'Includes uncalibrated probability warning');
 
   const firstItem = scanResult.ingredients[0];
   assert(typeof firstItem.name === 'string' && firstItem.name.length > 0, 'Item prediction has valid name');
