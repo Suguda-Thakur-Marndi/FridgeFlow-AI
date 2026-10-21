@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import { PreferencesService } from '@/storage/preferences';
 import { RecognizedItemReview, Recipe } from '@/types';
+import { EdgeVisionEngine, matchLocalRecipes, findLocalSubstitution } from './edgeAI';
 
 export interface ScanApiResponse {
   status: string;
@@ -28,34 +29,49 @@ export interface ScanResult {
   ingredients: RecognizedItemReview[];
   modelName: string;
   isLive: boolean;
+  isEdgeAI?: boolean;
+  inferenceTimeMs?: number;
 }
 
 export const ApiService = {
-  async checkHealth(): Promise<{ healthy: boolean; model?: string; message?: string }> {
+  async checkHealth(): Promise<{ healthy: boolean; model?: string; message?: string; isEdge?: boolean }> {
     try {
-      const baseUrl = await PreferencesService.getBackendUrl();
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-      const res = await fetch(`${baseUrl}/api/v1/health`, {
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const data = await res.json();
-        return { healthy: true, model: data.model };
-      }
-      return { healthy: false, message: `Server returned HTTP ${res.status}` };
+      const status = await EdgeVisionEngine.getStatus();
+      return {
+        healthy: true,
+        model: `${status.modelConfig.name} (${status.engine.toUpperCase()})`,
+        isEdge: true,
+      };
     } catch (err: any) {
-      return { healthy: false, message: err?.message || 'Connection failed' };
+      return { healthy: false, message: err?.message || 'Local AI engine error' };
     }
   },
 
-  async scanImage(imageUri: string): Promise<ScanResult> {
+  async scanImage(imageUri: string, options?: { forceRemote?: boolean; onProgress?: (percent: number) => void }): Promise<ScanResult> {
     // Immediate offline return for demo URI placeholder
     if (imageUri.startsWith('demo://')) {
       return this.getOfflineReferenceProfile();
+    }
+
+    // Default to 100% On-Device Edge AI (Zero Cloud / No Remote API)
+    if (!options?.forceRemote) {
+      try {
+        const localResult = await EdgeVisionEngine.analyzeFridgeImage(imageUri, {
+          onProgress: (_stage, pct) => {
+            if (options?.onProgress) options.onProgress(pct);
+          },
+        });
+        return {
+          ingredients: localResult.ingredients,
+          modelName: localResult.modelName,
+          isLive: localResult.isLive,
+          isEdgeAI: true,
+          inferenceTimeMs: localResult.inferenceTimeMs,
+        };
+      } catch (edgeErr: any) {
+        console.warn('On-device inference error:', edgeErr?.message);
+        throw edgeErr;
+      }
     }
 
     const baseUrl = await PreferencesService.getBackendUrl();
@@ -231,132 +247,13 @@ export const ApiService = {
     availableIngredients: string[],
     expiringIngredients: string[] = []
   ): Promise<Recipe[]> {
-    const baseUrl = await PreferencesService.getBackendUrl();
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-      const res = await fetch(`${baseUrl}/api/v1/recipes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          available_ingredients: availableIngredients,
-          expiring_ingredients: expiringIngredients,
-        }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        return await res.json();
-      }
-    } catch (e) {
-      console.warn('API recipes request offline, using local culinary rules:', e);
-    }
-
-    // Default curated set matching Stitch design
-    return [
-      {
-        id: 'recipe-garden-skillet',
-        title: 'Garden Spinach & Egg Skillet',
-        description: 'Pan-sautéed breakfast-for-dinner bowl with melted cheddar and fresh crisp peppers.',
-        category: 'Quick Skillets',
-        match_percentage: 100,
-        prep_time_minutes: 15,
-        servings: 2,
-        difficulty: 'Easy',
-        image_url:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuBgOCPpB99ZOeyaMjwXbkUJS4y7un4OJI8E1p85fpnY51wqma5qhpdZsvI0Jh_TkqKI9iudvugzNWmDclXbMyOYBBwGS2sFJrUMhOLomkI42Z8bMz-yQojGINWz2XieEYDm-UjikXPf8vhMrUqalBh-diwnBHoxLkm2_HDwKmqgsEWH67BRiP1S9ApZ-8-4qX0vkCP2unG7XDtwzvL4vYT-NgcpzHQIY4DN52GufFYw6G4A1UHNglQ8',
-        in_stock_ingredients: ['Eggs', 'Baby Spinach', 'Cheddar Cheese', 'Red Bell Pepper'],
-        missing_ingredients: [],
-        instructions: [
-          'Heat a cast iron skillet over medium heat with a light drizzle of olive oil.',
-          'Dice red bell pepper and sauté for 3 minutes.',
-          'Add baby spinach and wilt gently for 1 minute.',
-          'Crack in the eggs, scramble lightly, and season with sea salt.',
-          'Top with shredded cheddar, melt under lid for 60 seconds, and serve.',
-        ],
-        dietary_tags: ['Vegetarian', 'High Protein', 'Quick (< 20m)'],
-        crisper_first: true,
-        expiring_items_used: ['Baby Spinach'],
-      },
-      {
-        id: 'recipe-chickpea-bowl',
-        title: 'Crispy Spiced Chickpea & Green Bowl',
-        description: 'Warm grain & yogurt bowl topped with spiced roasted chickpeas and tender greens.',
-        category: 'Mediterranean Bowls',
-        match_percentage: 80,
-        prep_time_minutes: 25,
-        servings: 2,
-        difficulty: 'Easy',
-        image_url:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuBcxE0E4SeqXzoedMtFrshvYDknFx2RCfb8fHeFE54_pf9eJd6ZBtTCRUdfW4ufBG66bwB2_8HHNem3VQQd4ajIC97IUDS7hyHRcOju5N08f1wBY71xNl2B1pPoCsHQg5VfGf2a8nl6gj3JI0y7ae05gUpB7XsBLY2ygKrviUk8O5KDDhjwdlur0g6UadaTuSshBM_a_mM_g4lr0rNQrMPkTB5MMDNrKE7xDMS-nvugWV72V9PeKneF',
-        in_stock_ingredients: ['Greek Yogurt', 'Baby Spinach', 'Red Bell Pepper'],
-        missing_ingredients: ['Canned Chickpeas', 'Tahini'],
-        instructions: [
-          'Roast drained chickpeas with olive oil, cumin, and paprika.',
-          'Whisk Greek yogurt with a spoonful of tahini and lemon juice.',
-          'Assemble greens and sliced bell peppers in bowls.',
-          'Top with crispy chickpeas and drizzle with dressing.',
-        ],
-        dietary_tags: ['Vegetarian', 'High Fiber', 'Mediterranean'],
-        crisper_first: true,
-        expiring_items_used: ['Baby Spinach', 'Greek Yogurt'],
-      },
-      {
-        id: 'recipe-frittata-bake',
-        title: 'Creamy Vegetable Frittata Bake',
-        description: 'Fluffy oven-baked frittata layered with caramelized peppers, spinach, and savory cheese.',
-        category: 'Oven Bakes',
-        match_percentage: 75,
-        prep_time_minutes: 30,
-        servings: 4,
-        difficulty: 'Medium',
-        image_url: undefined,
-        in_stock_ingredients: ['Eggs', 'Baby Spinach', 'Cheddar Cheese'],
-        missing_ingredients: ['Heavy Cream'],
-        instructions: [
-          'Preheat oven to 375°F (190°C).',
-          'Whisk eggs with Greek yogurt (substitute for heavy cream), salt, and pepper.',
-          'Fold in wilted spinach and half the cheddar.',
-          'Bake for 20 minutes until puffed and golden.',
-        ],
-        dietary_tags: ['Vegetarian', 'Keto', 'High Protein'],
-        crisper_first: true,
-        expiring_items_used: ['Baby Spinach'],
-      },
-    ];
+    // 100% On-Device Offline Recipe Matching
+    return matchLocalRecipes(availableIngredients, expiringIngredients);
   },
 
   async getSubstitution(missingIngredient: string, availableIngredients: string[]): Promise<any> {
-    const baseUrl = await PreferencesService.getBackendUrl();
-    try {
-      const res = await fetch(`${baseUrl}/api/v1/substitutions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          missing_ingredient: missingIngredient,
-          available_ingredients: availableIngredients,
-        }),
-      });
-      if (res.ok) return await res.json();
-    } catch (e) {
-      console.warn('Substitution API offline');
-    }
-
-    if (missingIngredient.toLowerCase().includes('heavy cream')) {
-      return {
-        original_ingredient: 'Heavy Cream',
-        substitute_ingredient: 'Greek Yogurt (thinned with milk/water)',
-        confidence: 0.94,
-        ratio_instructions: 'Use 3/4 cup Greek yogurt whisked with 1/4 cup water or oat milk.',
-        culinary_notes: 'Adds pleasant richness while reducing excess fat in baked dishes.',
-      };
-    }
-    return null;
+    // 100% On-Device Offline Culinary Substitutions
+    return findLocalSubstitution(missingIngredient, availableIngredients);
   },
 };
+

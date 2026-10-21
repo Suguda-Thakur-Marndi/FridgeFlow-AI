@@ -1,0 +1,80 @@
+import { EdgeModelConfig } from './types';
+
+export const EDGE_MODEL_CATALOG: Record<string, EdgeModelConfig> = {
+  'smolvlm-500m': {
+    id: 'smolvlm-500m',
+    name: 'SmolVLM 500M Instruct (Quantized)',
+    family: 'SmolVLM (Hugging Face)',
+    parameterCount: '500 Million',
+    quantization: 'q4f16 (4-bit weights, fp16 activations)',
+    downloadSizeBytes: 320 * 1024 * 1024,
+    downloadSizeFormatted: '320 MB',
+    ramRequiredBytes: 520 * 1024 * 1024,
+    ramRequiredFormatted: '520 MB RAM',
+    license: 'Apache 2.0 (Permissive edge & commercial)',
+    recommendedFor: 'Balanced edge inference on modern mobile phones & browsers with WebGPU/WASM',
+    description: 'Compact vision-language model trained on multimodal instruct datasets. Directly maps image patches to structured food tokens.',
+  },
+  'moondream2-1.8b': {
+    id: 'moondream2-1.8b',
+    name: 'Moondream2 1.8B (Quantized)',
+    family: 'Moondream',
+    parameterCount: '1.86 Billion',
+    quantization: 'q4_k_m (4-bit block quantization)',
+    downloadSizeBytes: 980 * 1024 * 1024,
+    downloadSizeFormatted: '980 MB',
+    ramRequiredBytes: 1400 * 1024 * 1024,
+    ramRequiredFormatted: '1.4 GB RAM',
+    license: 'Apache 2.0',
+    recommendedFor: 'Desktop browsers with WebGPU or flagship mobile devices with 6GB+ RAM',
+    description: 'High-precision small vision-language model with fine-grained OCR and packaging label perception.',
+  },
+  'fridgevision-edge': {
+    id: 'fridgevision-edge',
+    name: 'FridgeVision Edge (Embedded VLM)',
+    family: 'SigLIP-Edge + Food Classifier',
+    parameterCount: '65 Million',
+    quantization: 'Int8 Quantized',
+    downloadSizeBytes: 38 * 1024 * 1024,
+    downloadSizeFormatted: '38 MB',
+    ramRequiredBytes: 90 * 1024 * 1024,
+    ramRequiredFormatted: '90 MB RAM',
+    license: 'Apache 2.0',
+    recommendedFor: 'Instant zero-wait offline analysis, low-memory devices, or cellular data saving',
+    description: 'Ultra-lightweight edge food visual parser optimized for real-time mobile crisper & shelf detection in < 300ms.',
+  },
+};
+
+export const DEFAULT_EDGE_MODEL_ID = 'smolvlm-500m';
+
+// Knowledge base of common ingredients and their default shelf lives and categories
+export const CULINARY_KNOWLEDGE_BASE: Record<
+  string,
+  { category: string; shelfLifeDays: number; defaultUnit: string }
+> = {
+  spinach: { category: 'Produce', shelfLifeDays: 3, defaultUnit: 'bag (150g)' },
+  'baby spinach': { category: 'Produce', shelfLifeDays: 3, defaultUnit: 'bag (150g)' },
+  eggs: { category: 'Dairy & Egg', shelfLifeDays: 14, defaultUnit: 'large' },
+  'eggs (organic)': { category: 'Dairy & Egg', shelfLifeDays: 14, defaultUnit: 'large' },
+  milk: { category: 'Dairy & Egg', shelfLifeDays: 7, defaultUnit: '1L' },
+  'oat milk': { category: 'Dairy / Alt', shelfLifeDays: 7, defaultUnit: '1L' },
+  yogurt: { category: 'Dairy & Egg', shelfLifeDays: 7, defaultUnit: '500g tub' },
+  'greek yogurt': { category: 'Dairy & Egg', shelfLifeDays: 7, defaultUnit: '500g tub' },
+  cheese: { category: 'Dairy', shelfLifeDays: 14, defaultUnit: '200g block' },
+  'cheddar cheese': { category: 'Dairy', shelfLifeDays: 14, defaultUnit: '200g block' },
+  'bell pepper': { category: 'Produce', shelfLifeDays: 7, defaultUnit: 'whole' },
+  'red bell pepper': { category: 'Produce', shelfLifeDays: 7, defaultUnit: 'whole' },
+  strawberries: { category: 'Produce', shelfLifeDays: 4, defaultUnit: 'punnet' },
+  jam: { category: 'Pantry', shelfLifeDays: 60, defaultUnit: 'pouch' },
+  'strawberry jam': { category: 'Pantry', shelfLifeDays: 60, defaultUnit: 'pouch' },
+  mayonnaise: { category: 'Pantry', shelfLifeDays: 30, defaultUnit: 'jar' },
+  butter: { category: 'Dairy & Egg', shelfLifeDays: 30, defaultUnit: 'pack' },
+  margarine: { category: 'Dairy / Alt', shelfLifeDays: 30, defaultUnit: 'tub' },
+  carrots: { category: 'Produce', shelfLifeDays: 14, defaultUnit: 'bag' },
+  tomatoes: { category: 'Produce', shelfLifeDays: 5, defaultUnit: 'whole' },
+  avocado: { category: 'Produce', shelfLifeDays: 5, defaultUnit: 'whole' },
+  lemon: { category: 'Produce', shelfLifeDays: 14, defaultUnit: 'whole' },
+  lemons: { category: 'Produce', shelfLifeDays: 14, defaultUnit: 'whole' },
+  chicken: { category: 'Meat & Seafood', shelfLifeDays: 2, defaultUnit: 'pack' },
+  juice: { category: 'Beverage', shelfLifeDays: 7, defaultUnit: 'bottle' },
+};

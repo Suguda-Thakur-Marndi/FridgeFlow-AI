@@ -19,6 +19,8 @@ import { ViewfinderReticle } from '@/components/ViewfinderReticle';
 import { ApiService } from '@/services/api';
 import { CulinaryColors, Typography, Radii, Spacing, Elevation } from '@/constants/theme';
 
+import { EdgeVisionEngine, EdgeModelStatus } from '@/services/edgeAI';
+
 const FLASH_STATES = [
   { label: 'Flash Auto', icon: 'flash-auto' as const, color: CulinaryColors.tertiaryFixedDim },
   { label: 'Flash On', icon: 'flash-on' as const, color: CulinaryColors.tertiaryFixed },
@@ -26,10 +28,10 @@ const FLASH_STATES = [
 ];
 
 const SIMULATED_STEPS = [
-  'Detecting produce & dairy items...',
-  'Estimating freshness & shelf lifespan...',
-  'Matching recipes against current inventory...',
-  'Cataloging detected ingredients with Gemma...',
+  'Extracting visual feature embeddings...',
+  'Running on-device neural vision inference...',
+  'Estimating shelf-life & crisper priorities...',
+  'Formatting zero-waste ingredient predictions...',
 ];
 
 export default function ScannerScreen() {
@@ -39,6 +41,11 @@ export default function ScannerScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [edgeStatus, setEdgeStatus] = useState<EdgeModelStatus | null>(null);
+
+  useEffect(() => {
+    EdgeVisionEngine.getStatus().then(setEdgeStatus).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -300,18 +307,20 @@ export default function ScannerScreen() {
               {/* Status Banner */}
               <View style={styles.previewOverlayBar}>
                 <View style={styles.networkBadge}>
-                  <MaterialIcons name="cloud-upload" size={14} color={CulinaryColors.primary} />
-                  <Text style={styles.networkBadgeText}>Ready to Send to Gemma Vision</Text>
+                  <MaterialIcons name="security" size={14} color={CulinaryColors.primary} />
+                  <Text style={styles.networkBadgeText}>
+                    100% On-Device AI • {edgeStatus?.engine.toUpperCase() || 'OFFLINE'}
+                  </Text>
                 </View>
               </View>
             </View>
 
-            {/* Error Message if API failed */}
+            {/* Error Message if local processing failed */}
             {scanError && (
               <View style={styles.errorBanner}>
                 <MaterialIcons name="error-outline" size={18} color={CulinaryColors.error} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.errorTitle}>Recognition Request Failed</Text>
+                  <Text style={styles.errorTitle}>Local Vision Processing Error</Text>
                   <Text style={styles.errorDetail}>
                     {scanError}. You can retry or proceed with offline culinary predictions.
                   </Text>
@@ -353,20 +362,20 @@ export default function ScannerScreen() {
           </View>
         )}
 
-        {/* Real-time Gemma Vision Processing Drawer Card */}
+        {/* Real-time On-Device Edge Vision Processing Drawer Card */}
         <View style={styles.drawerCard}>
           <View style={styles.drawerHandle} />
 
           <View style={styles.drawerHeader}>
             <View style={styles.gemmaIconCircle}>
-              <MaterialIcons name="psychology" size={20} color={CulinaryColors.onPrimary} />
+              <MaterialIcons name="memory" size={20} color={CulinaryColors.onPrimary} />
             </View>
             <View style={styles.drawerTitleCol}>
               <Text style={styles.drawerTitle}>
-                {isProcessing ? 'Analyzing with Gemma Vision...' : 'Finding your ingredients…'}
+                {isProcessing ? 'Analyzing On-Device...' : 'Finding your ingredients…'}
               </Text>
               <Text style={styles.drawerSubtitle}>
-                Open-weight vision analysis powered by Gemma
+                {edgeStatus?.modelConfig.name || 'On-Device Edge Vision Engine'}
               </Text>
             </View>
           </View>
@@ -379,15 +388,15 @@ export default function ScannerScreen() {
             </Text>
             <View style={styles.liveTag}>
               <MaterialIcons name="bolt" size={13} color={CulinaryColors.secondary} />
-              <Text style={styles.liveTagText}>Live</Text>
+              <Text style={styles.liveTagText}>Edge</Text>
             </View>
           </View>
 
           {/* Privacy & Network Transparency Banner */}
           <View style={styles.privacyBanner}>
-            <MaterialIcons name="wifi" size={14} color={CulinaryColors.outline} />
+            <MaterialIcons name="verified-user" size={14} color={CulinaryColors.primary} />
             <Text style={styles.privacyText}>
-              Image inference requires internet or local network connectivity to the configured backend. Photos are never stored or monetized.
+              100% On-device edge processing. Photos are analyzed directly inside your device memory and never transmitted over the internet.
             </Text>
           </View>
         </View>
@@ -397,9 +406,9 @@ export default function ScannerScreen() {
           <View style={styles.modalBackdrop}>
             <View style={styles.processingModalCard}>
               <ActivityIndicator size="large" color={CulinaryColors.primary} />
-              <Text style={styles.processingModalTitle}>Gemma Vision Analyzing</Text>
+              <Text style={styles.processingModalTitle}>On-Device Vision Analyzing</Text>
               <Text style={styles.processingModalDesc}>
-                Extracting visible food items, shelf life estimates &amp; crisper priorities...
+                Extracting visible food items, shelf life estimates &amp; crisper priorities directly on your device...
               </Text>
               <View style={styles.modalStepBadge}>
                 <View style={styles.pulseLiveDot} />

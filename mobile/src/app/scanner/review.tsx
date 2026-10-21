@@ -261,7 +261,7 @@ export default function ReviewScreen() {
             isLive ? { backgroundColor: CulinaryColors.primaryFixed } : { backgroundColor: CulinaryColors.secondaryContainer }
           ]}>
             <MaterialIcons
-              name={isLive ? "auto-awesome" : "bookmark-border"}
+              name={isLive ? "memory" : "bookmark-border"}
               size={14}
               color={isLive ? CulinaryColors.primary : CulinaryColors.onSecondaryContainer}
             />
@@ -269,28 +269,28 @@ export default function ReviewScreen() {
               styles.scanCompleteText,
               isLive ? { color: CulinaryColors.primary } : { color: CulinaryColors.onSecondaryContainer }
             ]}>
-              {isLive ? `LIVE AI: ${modelName.toUpperCase()}` : `REFERENCE PROFILE: ${modelName.toUpperCase()}`}
+              {isLive ? `ON-DEVICE AI: ${modelName.toUpperCase()}` : `REFERENCE PROFILE: ${modelName.toUpperCase()}`}
             </Text>
           </View>
           <Text style={styles.headline}>Here's what we found</Text>
           <Text style={styles.subheadline}>
-            Review &amp; confirm AI detections before saving to your fridge.
+            Review &amp; confirm on-device AI detections before saving to your fridge.
           </Text>
         </View>
 
         {/* Ambient Micro Info Card */}
         <View style={styles.tipCard}>
           <View style={styles.tipIconCircle}>
-            <MaterialIcons name="info" size={18} color={CulinaryColors.tertiaryContainer} />
+            <MaterialIcons name="security" size={18} color={CulinaryColors.primary} />
           </View>
           <View style={styles.tipTextCol}>
             <Text style={styles.tipTitle}>
-              {isLive ? 'LIVE MODEL INFERENCE' : 'OFFLINE CALIBRATION ACTIVE'}
+              {isLive ? 'ON-DEVICE INFERENCE (ZERO CLOUD UPLOAD)' : 'OFFLINE CALIBRATION ACTIVE'}
             </Text>
             <Text style={styles.tipBody}>
               {isLive
-                ? 'Processed by live open-weight Gemma vision model. Detections under 85% confidence are flagged for review.'
-                : 'Offline reference items loaded (calibrated with Google Stitch scenario). Connect to Ollama (ollama run gemma3:4b) for live inference.'}
+                ? 'Processed locally inside your device memory with zero network egress. Detections under 85% confidence are flagged for review.'
+                : 'Offline reference items loaded (calibrated with Google Stitch scenario). Connect on-device engine for live local inference.'}
             </Text>
           </View>
         </View>

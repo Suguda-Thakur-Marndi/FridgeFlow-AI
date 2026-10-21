@@ -16,6 +16,7 @@ import { PreferencesService } from '@/storage/preferences';
 import { StorageRepository } from '@/storage/database';
 import { ApiService } from '@/services/api';
 import { CulinaryColors, Typography, Radii, Spacing, Elevation } from '@/constants/theme';
+import { EdgeVisionEngine, EdgeModelStatus, EDGE_MODEL_CATALOG } from '@/services/edgeAI';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -27,9 +28,66 @@ export default function SettingsScreen() {
     message?: string;
   } | null>(null);
 
+  // Edge AI Model state
+  const [edgeStatus, setEdgeStatus] = useState<EdgeModelStatus | null>(null);
+  const [isInstallingModel, setIsInstallingModel] = useState(false);
+  const [installProgress, setInstallProgress] = useState(0);
+
+  const loadEdgeStatus = async () => {
+    try {
+      const status = await EdgeVisionEngine.getStatus();
+      setEdgeStatus(status);
+    } catch {}
+  };
+
   useEffect(() => {
     PreferencesService.getBackendUrl().then(setBackendUrl);
+    loadEdgeStatus();
   }, []);
+
+  const handleSelectModel = async (modelId: string) => {
+    try {
+      await EdgeVisionEngine.setModel(modelId);
+      await loadEdgeStatus();
+    } catch (e: any) {
+      Alert.alert('Error', e?.message || 'Failed to switch model');
+    }
+  };
+
+  const handleInstallModel = async () => {
+    setIsInstallingModel(true);
+    setInstallProgress(0);
+    try {
+      await EdgeVisionEngine.installModel(edgeStatus?.selectedModelId, (pct) => {
+        setInstallProgress(pct);
+      });
+      await loadEdgeStatus();
+      Alert.alert('Model Installed', 'Model assets cached locally. Ready for offline inference!');
+    } catch (e: any) {
+      Alert.alert('Download Error', e?.message || 'Failed to download model assets');
+    } finally {
+      setIsInstallingModel(false);
+    }
+  };
+
+  const handleDeleteModel = async () => {
+    Alert.alert(
+      'Remove Model Cache',
+      'This will remove cached model weights from local storage to free space.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            await EdgeVisionEngine.deleteModel();
+            await loadEdgeStatus();
+            Alert.alert('Done', 'Cached model weights cleared.');
+          },
+        },
+      ]
+    );
+  };
 
   const handleSaveUrl = async () => {
     if (!backendUrl.trim()) return;
@@ -80,14 +138,95 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Backend Endpoint Section */}
+        {/* 100% On-Device Edge AI Section */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <MaterialIcons name="memory" size={22} color={CulinaryColors.primary} />
+            <Text style={styles.cardTitle}>On-Device AI Engine</Text>
+          </View>
+          <Text style={styles.cardDesc}>
+            FridgeFlow AI runs multimodal vision-language models locally inside your device. No cloud LLMs, no remote APIs, and zero network egress for your photos.
+          </Text>
+
+          {/* Hardware Diagnostic Banner */}
+          <View style={styles.diagBanner}>
+            <MaterialIcons name="speed" size={16} color={CulinaryColors.primary} />
+            <Text style={styles.diagText}>
+              Acceleration: <Text style={styles.bold}>{edgeStatus?.engine.toUpperCase() || 'EDGE'}</Text> • Tier: <Text style={styles.bold}>{edgeStatus?.capabilities.tier.toUpperCase() || 'STANDARD'}</Text>
+            </Text>
+          </View>
+
+          {/* Model Selector Pills */}
+          <Text style={styles.subSectionTitle}>Select Vision Model</Text>
+          <View style={styles.modelGrid}>
+            {Object.values(EDGE_MODEL_CATALOG).map((m) => {
+              const isSelected = edgeStatus?.selectedModelId === m.id;
+              return (
+                <TouchableOpacity
+                  key={m.id}
+                  style={[styles.modelOptionCard, isSelected && styles.modelOptionCardSelected]}
+                  onPress={() => handleSelectModel(m.id)}
+                >
+                  <View style={styles.modelOptionHeader}>
+                    <Text style={[styles.modelOptionName, isSelected && styles.modelOptionNameSelected]}>
+                      {m.name}
+                    </Text>
+                    {isSelected && (
+                      <MaterialIcons name="check-circle" size={16} color={CulinaryColors.primary} />
+                    )}
+                  </View>
+                  <Text style={styles.modelOptionMeta}>
+                    {m.downloadSizeFormatted} • {m.ramRequiredFormatted} • {m.quantization}
+                  </Text>
+                  <Text style={styles.modelOptionDesc}>{m.recommendedFor}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Model Cache & Download Controls */}
+          <View style={styles.modelActionRow}>
+            {edgeStatus?.isInstalled ? (
+              <View style={styles.installedBadgeRow}>
+                <View style={styles.installedBadge}>
+                  <MaterialIcons name="offline-pin" size={16} color={CulinaryColors.primary} />
+                  <Text style={styles.installedBadgeText}>Cached &amp; Ready Offline</Text>
+                </View>
+                <TouchableOpacity style={styles.deleteModelBtn} onPress={handleDeleteModel}>
+                  <MaterialIcons name="delete-outline" size={16} color={CulinaryColors.error} />
+                  <Text style={styles.deleteModelText}>Clear Cache</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.installModelBtn}
+                onPress={handleInstallModel}
+                disabled={isInstallingModel}
+              >
+                {isInstallingModel ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <ActivityIndicator size="small" color={CulinaryColors.onPrimary} />
+                    <Text style={styles.installModelBtnText}>Caching Weights... {installProgress}%</Text>
+                  </View>
+                ) : (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <MaterialIcons name="download" size={18} color={CulinaryColors.onPrimary} />
+                    <Text style={styles.installModelBtnText}>Cache Model for Offline Use</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Legacy / Developer Backend Endpoint Section */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <MaterialIcons name="dns" size={20} color={CulinaryColors.primary} />
-            <Text style={styles.cardTitle}>AI Backend Endpoint</Text>
+            <Text style={styles.cardTitle}>Developer Backend (Optional Bridge)</Text>
           </View>
           <Text style={styles.cardDesc}>
-            Configure the FastAPI server URL hosting the Gemma vision model. No hardcoded machine addresses.
+            Optional FastAPI bridge for local testing or custom server benchmarking. Not required for normal offline user operation.
           </Text>
 
           <TextInput
@@ -379,4 +518,108 @@ const styles = StyleSheet.create({
     ...Typography.labelSm,
     color: CulinaryColors.outline,
   },
+  diagBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(205, 235, 196, 0.5)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radii.base,
+    gap: 8,
+    marginBottom: Spacing.md,
+  },
+  diagText: {
+    ...Typography.labelSm,
+    color: CulinaryColors.onSecondaryContainer,
+  },
+  subSectionTitle: {
+    ...Typography.labelMd,
+    color: CulinaryColors.onSurface,
+    fontWeight: '700',
+    marginBottom: Spacing.xs,
+  },
+  modelGrid: {
+    gap: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
+  modelOptionCard: {
+    backgroundColor: CulinaryColors.surfaceContainerLow,
+    borderRadius: Radii.base,
+    padding: Spacing.sm,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  modelOptionCardSelected: {
+    borderColor: CulinaryColors.primary,
+    backgroundColor: 'rgba(205, 235, 196, 0.3)',
+  },
+  modelOptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  modelOptionName: {
+    ...Typography.labelMd,
+    color: CulinaryColors.onSurface,
+    fontWeight: '700',
+  },
+  modelOptionNameSelected: {
+    color: CulinaryColors.primary,
+  },
+  modelOptionMeta: {
+    ...Typography.bodySm,
+    color: CulinaryColors.secondary,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  modelOptionDesc: {
+    ...Typography.bodySm,
+    color: CulinaryColors.onSurfaceVariant,
+    fontSize: 11,
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  modelActionRow: {
+    marginTop: Spacing.xs,
+  },
+  installedBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  installedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  installedBadgeText: {
+    ...Typography.labelSm,
+    color: CulinaryColors.primary,
+    fontWeight: '700',
+  },
+  deleteModelBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  deleteModelText: {
+    ...Typography.labelSm,
+    color: CulinaryColors.error,
+  },
+  installModelBtn: {
+    backgroundColor: CulinaryColors.primary,
+    paddingVertical: 10,
+    borderRadius: Radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  installModelBtnText: {
+    ...Typography.labelMd,
+    color: CulinaryColors.onPrimary,
+    fontWeight: '700',
+  },
 });
+
