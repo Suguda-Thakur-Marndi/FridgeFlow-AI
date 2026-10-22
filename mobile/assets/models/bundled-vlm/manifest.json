@@ -11,16 +11,16 @@
   "requires_network_download": false,
   "weight_files": [
     {
+      "filename": "model.onnx",
+      "format": "onnx_model",
+      "size_bytes": 2435420,
+      "sha256": "62df67f8bebf983e53175245f423710fe1998726939e06ce44262277f1f4c502"
+    },
+    {
       "filename": "model_quantized.tflite",
       "format": "tflite_flatbuffer",
       "size_bytes": 2521568,
       "sha256": "556788d92f443512c31cd0e3acc601bc3e16ffadce377a744826220ea3db4790"
-    },
-    {
-      "filename": "neural_head.json",
-      "format": "json_tensor_weights",
-      "size_bytes": 280556,
-      "sha256": "39514a537906a951c25bb1b7ea4377117b4ec2493cac072088e06b872f8cde24"
     }
   ],
   "vision_encoder": {
