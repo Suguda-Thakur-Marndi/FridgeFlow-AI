@@ -55,6 +55,16 @@ function withFridgeFlowEdgeAI(config) {
         }
       }
 
+      // Ensure LiteRT ProGuard rules in android/app/proguard-rules.pro
+      const proguardPath = path.join(androidDir, 'app', 'proguard-rules.pro');
+      if (fs.existsSync(proguardPath)) {
+        let proguardContent = fs.readFileSync(proguardPath, 'utf8');
+        if (!proguardContent.includes('org.tensorflow.lite')) {
+          proguardContent += `\n# TensorFlow Lite / LiteRT\n-keep class org.tensorflow.lite.** { *; }\n-dontwarn org.tensorflow.lite.**\n\n# FridgeFlow AI native bridge module\n-keep class com.fridgeflow.ai.** { *; }\n`;
+          fs.writeFileSync(proguardPath, proguardContent, 'utf8');
+        }
+      }
+
       return cfg;
     },
   ]);
@@ -72,12 +82,10 @@ function withFridgeFlowEdgeAI(config) {
     }
 
     // Add LiteRT dependencies
-    if (!contents.includes('org.tensorflow:tensorflow-lite:')) {
+    if (!contents.includes('org.tensorflow:tensorflow-lite:2.16.1')) {
       const deps = `
     // LiteRT / TensorFlow Lite On-Device Neural Vision Inference
     implementation("org.tensorflow:tensorflow-lite:2.16.1")
-    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
-    implementation("org.tensorflow:tensorflow-lite-gpu:2.16.1")
 `;
       contents = contents.replace(/dependencies\s*\{/, `dependencies {${deps}`);
     }
