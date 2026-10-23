@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { CulinaryColors, Typography, Radii, Spacing, Elevation } from '@/constants/theme';
 
 export interface BottomTabBarProps {
@@ -21,6 +22,7 @@ export interface BottomTabBarProps {
 export const BottomTabBar: React.FC<BottomTabBarProps> = (props) => {
   const { state, descriptors, navigation, navigateToTab } = props;
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const getTabConfig = (routeName: string): { label: string; icon: keyof typeof MaterialIcons.glyphMap } => {
     switch (routeName) {
@@ -69,39 +71,56 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = (props) => {
           };
 
           return (
-            <TouchableOpacity
-              key={route.key}
-              accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel || label}
-              testID={`tab-${route.name}`}
-              onPress={onPress}
-              style={styles.tabButton}
-              activeOpacity={0.7}
-            >
-              {/* Sage Pill Active Indicator */}
-              <View
-                style={[
-                  styles.iconPill,
-                  isFocused && styles.iconPillActive,
-                ]}
-              >
-                <MaterialIcons
-                  name={icon}
-                  size={24}
-                  color={isFocused ? CulinaryColors.primaryContainer : CulinaryColors.outline}
-                />
-              </View>
+            <React.Fragment key={route.key}>
+              {index === 2 && (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Scan Fridge with AI"
+                  testID="tab-scan-center"
+                  onPress={() => router.push('/scanner')}
+                  style={styles.centerScanButton}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.centerScanCircle}>
+                    <MaterialIcons name="photo-camera" size={24} color={CulinaryColors.onPrimary} />
+                  </View>
+                  <Text style={styles.centerScanLabel}>Scan</Text>
+                </TouchableOpacity>
+              )}
 
-              <Text
-                style={[
-                  styles.tabLabel,
-                  isFocused ? styles.tabLabelActive : styles.tabLabelInactive,
-                ]}
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityState={isFocused ? { selected: true } : {}}
+                accessibilityLabel={options.tabBarAccessibilityLabel || label}
+                testID={`tab-${route.name}`}
+                onPress={onPress}
+                style={styles.tabButton}
+                activeOpacity={0.7}
               >
-                {label}
-              </Text>
-            </TouchableOpacity>
+                {/* Sage Pill Active Indicator */}
+                <View
+                  style={[
+                    styles.iconPill,
+                    isFocused && styles.iconPillActive,
+                  ]}
+                >
+                  <MaterialIcons
+                    name={icon}
+                    size={24}
+                    color={isFocused ? CulinaryColors.primaryContainer : CulinaryColors.outline}
+                  />
+                </View>
+
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    isFocused ? styles.tabLabelActive : styles.tabLabelInactive,
+                  ]}
+                >
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            </React.Fragment>
           );
         })}
       </View>
@@ -151,5 +170,30 @@ const styles = StyleSheet.create({
   tabLabelInactive: {
     color: CulinaryColors.outline,
     fontWeight: '500',
+  },
+  centerScanButton: {
+    flex: 1,
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -16,
+  },
+  centerScanCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: Radii.full,
+    backgroundColor: CulinaryColors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Elevation.level3,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  centerScanLabel: {
+    ...Typography.labelSm,
+    color: CulinaryColors.primary,
+    fontWeight: '700',
+    fontSize: 11,
+    marginTop: 2,
   },
 });

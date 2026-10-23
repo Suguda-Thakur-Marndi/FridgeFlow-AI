@@ -1,9 +1,16 @@
 import React, { useEffect } from 'react';
+import { LogBox } from 'react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StorageRepository } from '@/storage/database';
+
+LogBox.ignoreLogs([
+  'VerifyEachNodeIsAssignedToAnEp',
+  '[W:onnxruntime:',
+  'Rerunning with verbose output',
+]);
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 

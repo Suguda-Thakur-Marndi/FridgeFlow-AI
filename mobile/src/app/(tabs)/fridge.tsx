@@ -156,14 +156,24 @@ export default function FridgeScreen() {
         title="My Fridge"
         subtitle="Inventory"
         rightAction={
-          <TouchableOpacity
-            style={styles.headerAddBtn}
-            onPress={handleOpenAddModal}
-            accessibilityLabel="Add ingredient"
-          >
-            <MaterialIcons name="add" size={20} color={CulinaryColors.onPrimary} />
-            <Text style={styles.headerAddBtnText}>Add</Text>
-          </TouchableOpacity>
+          <View style={styles.headerActionsRow}>
+            <TouchableOpacity
+              style={styles.headerRecipeBtn}
+              onPress={() => router.push('/(tabs)/recipes')}
+              accessibilityLabel="Go to Recipes"
+            >
+              <MaterialIcons name="menu-book" size={19} color={CulinaryColors.primary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.headerAddBtn}
+              onPress={handleOpenAddModal}
+              accessibilityLabel="Add ingredient"
+            >
+              <MaterialIcons name="add" size={20} color={CulinaryColors.onPrimary} />
+              <Text style={styles.headerAddBtnText}>Add</Text>
+            </TouchableOpacity>
+          </View>
         }
       />
 
@@ -190,8 +200,44 @@ export default function FridgeScreen() {
               <Text style={styles.crisperBody}>
                 {expiringList.map((i) => `${i.name} (${i.daysRemaining}d left)`).join(', ')}
               </Text>
+              <TouchableOpacity
+                style={styles.crisperRecipeBtn}
+                onPress={() => router.push('/(tabs)/recipes')}
+                accessibilityLabel="Find recipes using expiring items"
+                activeOpacity={0.8}
+              >
+                <MaterialIcons name="restaurant" size={15} color={CulinaryColors.primary} />
+                <Text style={styles.crisperRecipeBtnText}>Find Recipes with Expiring Items</Text>
+                <MaterialIcons name="arrow-forward" size={15} color={CulinaryColors.primary} />
+              </TouchableOpacity>
             </View>
           </View>
+        )}
+
+        {/* Cook with My Fridge Hero Action Card */}
+        {ingredients.length > 0 && (
+          <TouchableOpacity
+            style={styles.cookHeroCard}
+            onPress={() => router.push('/(tabs)/recipes')}
+            activeOpacity={0.88}
+            accessibilityLabel="Cook with fridge ingredients"
+          >
+            <View style={styles.cookHeroLeft}>
+              <View style={styles.cookHeroIconCircle}>
+                <MaterialIcons name="restaurant-menu" size={20} color={CulinaryColors.onPrimary} />
+              </View>
+              <View style={styles.cookHeroTextCol}>
+                <Text style={styles.cookHeroTitle}>Cook from Fridge</Text>
+                <Text style={styles.cookHeroSubtitle} numberOfLines={1}>
+                  {ingredients.length} items ready • Zero-waste
+                </Text>
+              </View>
+            </View>
+            <View style={styles.cookHeroBtn}>
+              <Text style={styles.cookHeroBtnText}>Recipes</Text>
+              <MaterialIcons name="arrow-forward" size={14} color={CulinaryColors.onPrimary} />
+            </View>
+          </TouchableOpacity>
         )}
 
         {/* Search Bar */}
@@ -253,13 +299,23 @@ export default function FridgeScreen() {
               <Text style={styles.emptySubtitle}>
                 Scan your fridge with AI or add items manually to track your fresh food.
               </Text>
-              <TouchableOpacity
-                style={styles.emptyScanBtn}
-                onPress={() => router.push('/scanner')}
-              >
-                <MaterialIcons name="document-scanner" size={18} color={CulinaryColors.onPrimary} />
-                <Text style={styles.emptyScanBtnText}>Scan with AI</Text>
-              </TouchableOpacity>
+              <View style={styles.emptyBtnRow}>
+                <TouchableOpacity
+                  style={styles.emptyScanBtn}
+                  onPress={() => router.push('/scanner')}
+                >
+                  <MaterialIcons name="document-scanner" size={18} color={CulinaryColors.onPrimary} />
+                  <Text style={styles.emptyScanBtnText}>Scan with AI</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.emptyRecipeBtn}
+                  onPress={() => router.push('/(tabs)/recipes')}
+                >
+                  <MaterialIcons name="menu-book" size={18} color={CulinaryColors.primary} />
+                  <Text style={styles.emptyRecipeBtnText}>Browse Recipes</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
             filteredIngredients.map((item) => (
@@ -274,7 +330,7 @@ export default function FridgeScreen() {
           )}
         </View>
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
 
       {/* Add / Edit Ingredient Modal */}
@@ -386,18 +442,41 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.xl,
   },
+  headerActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  headerRecipeBtn: {
+    backgroundColor: CulinaryColors.surfaceContainerLowest,
+    width: 34,
+    height: 34,
+    borderRadius: Radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: CulinaryColors.secondaryContainer,
+    ...Elevation.level1,
+  },
+  headerRecipeBtnText: {
+    ...Typography.labelSm,
+    fontSize: 11,
+    color: CulinaryColors.primary,
+    fontWeight: '700',
+  },
   headerAddBtn: {
     backgroundColor: CulinaryColors.primaryContainer,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    gap: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: Radii.full,
     ...Elevation.level1,
   },
   headerAddBtnText: {
     ...Typography.labelSm,
+    fontSize: 11,
     color: CulinaryColors.onPrimary,
     fontWeight: '700',
   },
@@ -448,6 +527,85 @@ const styles = StyleSheet.create({
     ...Typography.bodySm,
     color: CulinaryColors.onSurfaceVariant,
     lineHeight: 18,
+  },
+  crisperRecipeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    backgroundColor: CulinaryColors.surfaceContainerLowest,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radii.full,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: CulinaryColors.primaryFixedDim,
+    ...Elevation.level1,
+  },
+  crisperRecipeBtnText: {
+    ...Typography.labelSm,
+    color: CulinaryColors.primary,
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  cookHeroCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: CulinaryColors.surfaceContainerLowest,
+    borderRadius: Radii.xl,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: Spacing.sm + 2,
+    borderWidth: 1,
+    borderColor: CulinaryColors.secondaryContainer,
+    ...Elevation.level1,
+  },
+  cookHeroLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+    marginRight: 4,
+  },
+  cookHeroIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: Radii.full,
+    backgroundColor: CulinaryColors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cookHeroTextCol: {
+    flex: 1,
+  },
+  cookHeroTitle: {
+    ...Typography.labelMd,
+    fontSize: 13,
+    color: CulinaryColors.onSurface,
+    fontWeight: '700',
+  },
+  cookHeroSubtitle: {
+    ...Typography.bodySm,
+    color: CulinaryColors.outline,
+    fontSize: 11,
+    marginTop: 1,
+  },
+  cookHeroBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: CulinaryColors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: Radii.full,
+    flexShrink: 0,
+  },
+  cookHeroBtnText: {
+    ...Typography.labelSm,
+    color: CulinaryColors.onPrimary,
+    fontWeight: '700',
+    fontSize: 11,
   },
   searchBox: {
     flexDirection: 'row',
@@ -525,6 +683,48 @@ const styles = StyleSheet.create({
   emptyScanBtnText: {
     ...Typography.labelMd,
     color: CulinaryColors.onPrimary,
+  },
+  emptyBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 12,
+  },
+  emptyRecipeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: CulinaryColors.surfaceContainerLowest,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: Radii.full,
+    borderWidth: 1,
+    borderColor: CulinaryColors.secondaryContainer,
+    marginTop: 12,
+  },
+  emptyRecipeBtnText: {
+    ...Typography.labelMd,
+    color: CulinaryColors.primary,
+    fontWeight: '600',
+  },
+  fabRecipe: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    backgroundColor: CulinaryColors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: Radii.full,
+    ...Elevation.level3,
+    zIndex: 99,
+  },
+  fabRecipeText: {
+    ...Typography.labelMd,
+    color: CulinaryColors.onPrimary,
+    fontWeight: '700',
   },
   // Modal styles
   modalBackdrop: {
