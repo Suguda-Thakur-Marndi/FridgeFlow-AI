@@ -4,14 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
-  ImageBackground,
   Image,
   ActivityIndicator,
   Alert,
   Platform,
   Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -216,11 +215,13 @@ export default function ScannerScreen() {
         {/* Viewfinder OR Image Preview Mode */}
         {!previewUri ? (
           <View style={styles.cameraFrame}>
-            <ImageBackground
+            <Image
               source={require('../../../assets/images/hero_produce.jpg')}
-              style={styles.backgroundImage}
+              style={StyleSheet.absoluteFill}
               resizeMode="cover"
-            >
+              accessibilityIgnoresInvertColors
+            />
+            <View style={styles.backgroundImage}>
               <View style={styles.cameraScrim} />
 
               {/* Guidance Pill Overlay */}
@@ -276,24 +277,26 @@ export default function ScannerScreen() {
                   <Text style={styles.dockItemLabel}>Manual</Text>
                 </View>
               </View>
-            </ImageBackground>
+            </View>
           </View>
         ) : (
           /* Preview and Confirm Screen */
           <View style={styles.previewContainer}>
             <View style={styles.previewImageCard}>
               {previewUri.startsWith('demo://') ? (
-                <ImageBackground
-                  source={{
-                    uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCtykg0FPdhyNs5ZTVRvaUfuxNkfjwuHiyWUy7COPguAXnDjmij4PfI3S1UZiFEy8sHxbLAMZYiBQKv6jREDBqkFQkP-yB3kSWc04fQOaU9xH86uyZTI0Jd9UBwfL6YVSEmAbar0J833JLx1Ric3_MXzNkLl7yCFxp5KZuA44FW4sGIZzNy23p55Br5rwLVY2Tm-LcVDRI4SE79eg_8M7Cze7AtkuPwmjFUhqyLSr0eC_sY9puA0Qae',
-                  }}
-                  style={styles.previewImage}
-                  resizeMode="cover"
-                >
+                <View style={styles.previewImage}>
+                  <Image
+                    source={{
+                      uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCtykg0FPdhyNs5ZTVRvaUfuxNkfjwuHiyWUy7COPguAXnDjmij4PfI3S1UZiFEy8sHxbLAMZYiBQKv6jREDBqkFQkP-yB3kSWc04fQOaU9xH86uyZTI0Jd9UBwfL6YVSEmAbar0J833JLx1Ric3_MXzNkLl7yCFxp5KZuA44FW4sGIZzNy23p55Br5rwLVY2Tm-LcVDRI4SE79eg_8M7Cze7AtkuPwmjFUhqyLSr0eC_sY9puA0Qae',
+                    }}
+                    style={StyleSheet.absoluteFill}
+                    resizeMode="cover"
+                    accessibilityIgnoresInvertColors
+                  />
                   <View style={styles.demoBadge}>
                     <Text style={styles.demoBadgeText}>Sample Fridge Photo</Text>
                   </View>
-                </ImageBackground>
+                </View>
               ) : (
                 <Image
                   source={{ uri: previewUri }}
@@ -492,6 +495,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: CulinaryColors.inverseSurface,
     minHeight: 440,
+    position: 'relative',
     ...Elevation.level2,
   },
   backgroundImage: {
