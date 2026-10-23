@@ -1,56 +1,104 @@
-# Welcome to your Expo app 👋
+# FridgeFlow AI — Mobile & Web Client
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The universal cross-platform client for **FridgeFlow AI**, targeting **Android**, **iOS (iPhone & iPad)**, and modern **Web browsers**. Built on Expo SDK 58, Expo Router 58, React Native 0.88, and on-device/edge ONNX Runtime & TFLite inference.
 
-## Get started
+---
 
-1. Install dependencies
+## 🛠️ Tech Stack & Architecture
 
-   ```bash
-   npm install
-   ```
+- **Framework**: Expo SDK 58 (`expo-router` v58 file-based routing)
+- **Platforms**:
+  - 🌐 **Web**: Responsive layout, HTML5 File API image processing, ONNX Runtime Web fallback, local storage persistence
+  - 🤖 **Android**: Native edge AI module (`FridgeFlowEdgeAIModule`), SQLite storage, 48dp touch targets, back handler support
+  - 🍎 **iOS**: Responsive iPhone/iPad modal presentation, SQLite storage, safe-area adaptation
+- **Design System**: Google Stitch *Culinary Ecology* design tokens (`#04442F` deep hunter green, `#F2FCF2` mint cream, `#F0BF4E` warm ochre)
+- **Edge AI**: Dual-runtime architecture:
+  - On-Device Neural Backbone: Quantized ONNX & TFLite models (`assets/models/bundled-vlm/`)
+  - Classification Head: Matrix forward pass with cosine similarity against 20 culinary classes
+  - Fallback: Cloud-assisted inference via FastAPI backend (`../backend`)
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## 🚀 Quick Start
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### 1. Install Dependencies
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+### 2. Start Development Server
+```bash
+npm run start
+```
+From the interactive terminal prompt, you can press:
+- `w` — Open in Web browser
+- `a` — Open on connected Android device/emulator
+- `i` — Open on connected iOS simulator
 
-### Other setup steps
+### 3. Dedicated Platform Launchers
+```bash
+npm run web       # Start Expo web dev server
+npm run android   # Run on connected Android device
+npm run ios       # Run on iOS simulator
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+---
 
-## Learn more
+## 🧪 Testing & Verification
 
-To learn more about developing your project with Expo, look at the following resources:
+FridgeFlow AI includes comprehensive test suites across storage, business logic, offline Edge AI inference, and held-out dataset benchmarking:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+# Run TypeScript compilation check
+npm run check
 
-## Join the community
+# Run all automated test suites (Business Logic, Edge AI, Benchmark, Offline Inference)
+npm test
 
-Join our community of developers creating universal apps.
+# Run ESLint validation
+npm run lint
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## 📦 Production Builds
+
+```bash
+# Build production web bundle (outputs to mobile/dist/)
+npm run build:web
+
+# Build Android preview APK via EAS
+npm run build:apk
+
+# Build Android production AAB via EAS
+npm run build:aab
+
+# Build iOS production archive via EAS
+npm run build:ios
+```
+
+---
+
+## 📁 Directory Structure
+
+```
+mobile/
+├── assets/                  # App icons, splash screens, hero images & test datasets
+│   ├── models/bundled-vlm/  # Real ONNX, TFLite & neural head model weights
+│   └── test_dataset/        # Held-out real fridge test photos & ground truth
+├── plugins/                 # Expo config plugins (native edge AI linking)
+├── public/                  # Web static assets (models served for ONNX Runtime Web)
+├── scripts/                 # Maintenance scripts (patch_ort.py)
+├── src/
+│   ├── app/                 # Expo Router file-based screens & navigation tabs
+│   │   ├── (tabs)/          # Main tab screens: Home, Fridge, Recipes, Shopping
+│   │   ├── scanner/         # Viewfinder camera & ingredient review screens
+│   │   └── settings.tsx     # Settings, sample data reset & storage controls
+│   ├── components/          # Reusable UI components (CulinaryHeader, RecipeCard, etc.)
+│   ├── constants/           # Culinary Ecology design theme tokens
+│   ├── hooks/               # Custom hooks (color schemes, focus safety)
+│   ├── native-modules/      # Android Kotlin bridge for edge AI acceleration
+│   ├── services/            # Edge AI inference engine & backend API client
+│   └── storage/             # Cross-platform SQLite & Web storage repositories
+└── tests/                   # Automated unit, integration, and benchmark tests
+```

@@ -63,9 +63,7 @@ export default function HomeScreen() {
         {/* Hero Visual Frame with Fresh Produce & Culinary Glow */}
         <View style={styles.heroCard}>
           <Image
-            source={{
-              uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAV_gNJgxN4mxiXWi0PngE4G6POFkMU4mWz0ImiAH_4chRo3iCI6Wwk4oEEU0c-00rod6qy6dBbW9eVYLByxszKWjnLTZ4mJEIA_1lnvNKQRtrVgwyaWtBIp2--JmeH0kYYrQmR6cQYCIU0lmlTtWNnSgPhKIwhe0cIKFbitgTpboSNJVmD8SM88nUdrCc3TykttwOeqTsV_8R7kXFFYF0WOEzY9zzZKWV3QFNlbpq7L5wRrxQ4Iw0y',
-            }}
+            source={require('../../../assets/images/hero_produce.jpg')}
             style={styles.heroImage}
             resizeMode="cover"
           />

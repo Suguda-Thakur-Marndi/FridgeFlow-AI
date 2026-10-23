@@ -350,4 +350,14 @@ export const StorageRepository: IStorageRepository = {
       this.addGroceryItem(g);
     }
   },
+
+  clearAllData() {
+    saveIngredients([]);
+    saveGroceries([]);
+  },
+
+  resetToSampleData() {
+    this.clearAllData();
+    this.seedDataIfEmpty();
+  },
 };

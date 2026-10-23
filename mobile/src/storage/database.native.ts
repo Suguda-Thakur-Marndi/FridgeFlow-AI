@@ -414,4 +414,17 @@ export const StorageRepository: IStorageRepository = {
       this.addGroceryItem(g);
     }
   },
+
+  clearAllData() {
+    const db = getDatabase();
+    db.withTransactionSync(() => {
+      db.runSync('DELETE FROM ingredients');
+      db.runSync('DELETE FROM grocery_items');
+    });
+  },
+
+  resetToSampleData() {
+    this.clearAllData();
+    this.seedDataIfEmpty();
+  },
 };

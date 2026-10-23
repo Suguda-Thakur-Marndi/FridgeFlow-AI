@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import { Ingredient, GroceryItem, ExpiryStatus } from '@/types';
+import { IStorageRepository } from './types';
 
 const DB_NAME = 'fridgeflow.db';
 
@@ -81,7 +82,7 @@ export function formatFutureDate(daysFromNow: number): string {
   return `${year}-${month}-${day}`;
 }
 
-export const StorageRepository = {
+export const StorageRepository: IStorageRepository = {
   // ---- INGREDIENTS ----
   getAllIngredients(): Ingredient[] {
     const db = getDatabase();
@@ -416,5 +417,18 @@ export const StorageRepository = {
     for (const g of sampleGroceries) {
       this.addGroceryItem(g);
     }
+  },
+
+  clearAllData() {
+    const db = getDatabase();
+    db.withTransactionSync(() => {
+      db.runSync('DELETE FROM ingredients');
+      db.runSync('DELETE FROM grocery_items');
+    });
+  },
+
+  resetToSampleData() {
+    this.clearAllData();
+    this.seedDataIfEmpty();
   },
 };

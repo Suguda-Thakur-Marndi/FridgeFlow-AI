@@ -30,4 +30,6 @@ export interface IPreferencesRepository {
 
 export interface IStorageRepository extends IIngredientRepository, IShoppingListRepository {
   seedDataIfEmpty(): void;
+  resetToSampleData(): void;
+  clearAllData(): void;
 }

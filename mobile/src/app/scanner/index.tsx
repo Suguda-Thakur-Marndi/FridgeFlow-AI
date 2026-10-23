@@ -217,9 +217,7 @@ export default function ScannerScreen() {
         {!previewUri ? (
           <View style={styles.cameraFrame}>
             <ImageBackground
-              source={{
-                uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCtykg0FPdhyNs5ZTVRvaUfuxNkfjwuHiyWUy7COPguAXnDjmij4PfI3S1UZiFEy8sHxbLAMZYiBQKv6jREDBqkFQkP-yB3kSWc04fQOaU9xH86uyZTI0Jd9UBwfL6YVSEmAbar0J833JLx1Ric3_MXzNkLl7yCFxp5KZuA44FW4sGIZzNy23p55Br5rwLVY2Tm-LcVDRI4SE79eg_8M7Cze7AtkuPwmjFUhqyLSr0eC_sY9puA0Qae',
-              }}
+              source={require('../../../assets/images/hero_produce.jpg')}
               style={styles.backgroundImage}
               resizeMode="cover"
             >

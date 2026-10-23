@@ -75,8 +75,8 @@ export default function FridgeScreen() {
       return;
     }
 
-    const qty = parseFloat(formQuantity) || 1.0;
-    const days = parseInt(formDays, 10) || 5;
+    const qty = Math.max(0.1, parseFloat(formQuantity) || 1.0);
+    const days = Math.max(0, parseInt(formDays, 10) || 5);
     const expDate = formatFutureDate(days);
 
     if (editingItem) {

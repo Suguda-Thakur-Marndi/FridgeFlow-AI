@@ -212,4 +212,37 @@ def test_scan_is_live_flag():
     assert isinstance(data["is_live_model"], bool)
 
 
+def test_recipes_empty_inventory():
+    payload = {
+        "available_ingredients": [],
+        "expiring_ingredients": []
+    }
+    response = client.post("/api/v1/recipes", json=payload)
+    assert response.status_code == 200
+    recipes = response.json()
+    assert len(recipes) >= 1
+    for r in recipes:
+        assert r["match_percentage"] == 0
+        assert len(r["in_stock_ingredients"]) == 0
+        assert len(r["missing_ingredients"]) > 0
+
+
+def test_recipes_max_prep_time_filter():
+    payload = {
+        "available_ingredients": ["Eggs", "Baby Spinach"],
+        "max_prep_time_minutes": 15
+    }
+    response = client.post("/api/v1/recipes", json=payload)
+    assert response.status_code == 200
+    recipes = response.json()
+    assert all(r["prep_time_minutes"] <= 15 for r in recipes)
+
+
+def test_substitution_invalid_payload():
+    # Missing required field 'available_ingredients'
+    response = client.post("/api/v1/substitutions", json={"missing_ingredient": "Milk"})
+    assert response.status_code == 422
+
+
+
 

@@ -207,6 +207,53 @@ export function runTests(): { passed: number; failed: number; results: string[] 
   assert(calc.missing.includes('Avocados') && calc.missing.includes('Feta Cheese'), 'Correct missing item names');
   assert(calc.matchPercentage === 33, '33% match percentage correctly calculated');
 
+  // Test 9: Empty Inventory Recipe Match Handling
+  const emptyMatch = evaluateRecipeMatch(recipeNeeds, []);
+  assert(emptyMatch.matchPercentage === 0, 'Empty inventory yields 0% recipe match');
+  assert(emptyMatch.missing.length === 3, 'All recipe ingredients flagged as missing on empty inventory');
+  assert(emptyMatch.isFullMatch === false, 'isFullMatch is false when empty');
+
+  // Test 10: Ingredient Quantity Bounding
+  function sanitizeQuantity(raw: string | number): number {
+    const val = typeof raw === 'number' ? raw : parseFloat(raw);
+    return Math.max(0.1, isNaN(val) ? 1.0 : val);
+  }
+  assert(sanitizeQuantity(-5) === 0.1, 'Negative quantity bounded to 0.1 minimum');
+  assert(sanitizeQuantity(0) === 0.1, 'Zero quantity bounded to 0.1 minimum');
+  assert(sanitizeQuantity('invalid') === 1.0, 'Invalid quantity string defaults to 1.0');
+  assert(sanitizeQuantity('2.5') === 2.5, 'Valid decimal quantity string preserved');
+
+  // Test 11: Shelf-Life Days Bounding
+  function sanitizeShelfLifeDays(raw: string | number): number {
+    const val = typeof raw === 'number' ? raw : parseInt(raw, 10);
+    return Math.max(0, isNaN(val) ? 5 : val);
+  }
+  assert(sanitizeShelfLifeDays(-3) === 0, 'Negative shelf life days bounded to 0');
+  assert(sanitizeShelfLifeDays('NaN') === 5, 'Invalid shelf life defaults to 5 days');
+  assert(sanitizeShelfLifeDays(14) === 14, 'Valid shelf life preserved');
+
+  // Test 12: Clear All Data and Reset Sample Data State Transitions
+  let mockIngredients = [{ id: '1', name: 'Old Item' }];
+  let mockGroceries = [{ id: 'g1', name: 'Old Grocery' }];
+
+  function clearAllMockData() {
+    mockIngredients = [];
+    mockGroceries = [];
+  }
+  clearAllMockData();
+  assert(mockIngredients.length === 0 && mockGroceries.length === 0, 'clearAllData completely empties state');
+
+  function resetSampleMockData() {
+    clearAllMockData();
+    mockIngredients = [
+      { id: 'sample-1', name: 'Baby Spinach' },
+      { id: 'sample-2', name: 'Eggs (Organic)' },
+    ];
+  }
+  resetSampleMockData();
+  assert(mockIngredients.length === 2, 'resetToSampleData repopulates sample data after wipe');
+  assert(mockIngredients[0].name === 'Baby Spinach', 'Sample items restored in correct order');
+
   return { passed, failed, results };
 }
 

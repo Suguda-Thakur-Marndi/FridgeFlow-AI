@@ -114,9 +114,26 @@ export default function SettingsScreen() {
           text: 'Reset',
           style: 'destructive',
           onPress: () => {
-            StorageRepository.clearCompletedGroceryItems();
-            StorageRepository.seedDataIfEmpty();
+            StorageRepository.resetToSampleData();
             Alert.alert('Done', 'Database refreshed with sample data.');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleClearAllData = () => {
+    Alert.alert(
+      'Clear All Local Data',
+      'Are you sure you want to delete all items from your fridge inventory and grocery list? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: () => {
+            StorageRepository.clearAllData();
+            Alert.alert('Done', 'All local inventory and grocery data cleared.');
           },
         },
       ]
@@ -335,6 +352,14 @@ export default function SettingsScreen() {
           <TouchableOpacity style={styles.resetBtn} onPress={handleResetData}>
             <MaterialIcons name="restart-alt" size={18} color={CulinaryColors.primary} />
             <Text style={styles.resetBtnText}>Reload Stitch Sample Items</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.resetBtn, { marginTop: 8 }]}
+            onPress={handleClearAllData}
+          >
+            <MaterialIcons name="delete-sweep" size={18} color={CulinaryColors.error} />
+            <Text style={[styles.resetBtnText, { color: CulinaryColors.error }]}>Clear All Inventory &amp; Groceries</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
