@@ -1,0 +1,65 @@
+# ==============================================================================
+# FridgeFlow AI — Backend Docker Ignore
+# Exclude non-production, cache, and sensitive files from the Docker build context
+# ==============================================================================
+
+# Python bytecode and compiled caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Testing & linting caches
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.ruff_cache/
+
+# Local Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Secrets and local environment files
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+*.crt
+
+# IDE and operating system metadata
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Documentation & Git
+.git/
+.gitignore
+.gitattributes

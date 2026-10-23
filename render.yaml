@@ -1,15 +1,15 @@
 services:
   - type: web
-    name: fridgeflow-ai-backend
-    runtime: python
-    region: oregon
+    name: fridgeflow-ai-api
+    runtime: docker
+    region: singapore
     plan: starter
-    buildCommand: "pip install -r backend/requirements.txt"
-    startCommand: "python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    branch: master
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /api/v1/health
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
       - key: GEMMA_MODEL_NAME
         value: gemma3:4b
       - key: FORCE_MOCK_VISION

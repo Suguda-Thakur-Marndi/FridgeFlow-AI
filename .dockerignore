@@ -1,0 +1,37 @@
+# ==============================================================================
+# FridgeFlow AI — Root Docker Ignore
+# Exclude mobile client, node_modules, virtualenvs, and secrets from build contexts
+# ==============================================================================
+
+# Mobile App & Frontend
+mobile/
+stitch_design/
+test_photos/
+node_modules/
+
+# Python bytecode and caches
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.coverage
+**/htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets and local environment files
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Git and IDE metadata
+.git/
+.github/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
