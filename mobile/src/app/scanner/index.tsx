@@ -44,7 +44,7 @@ export default function ScannerScreen() {
   const [edgeStatus, setEdgeStatus] = useState<EdgeModelStatus | null>(null);
 
   useEffect(() => {
-    EdgeVisionEngine.getStatus().then(setEdgeStatus).catch(() => {});
+    EdgeVisionEngine?.getStatus?.().then(setEdgeStatus).catch(() => {});
   }, []);
 
   useEffect(() => {

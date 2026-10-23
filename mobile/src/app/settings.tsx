@@ -35,8 +35,10 @@ export default function SettingsScreen() {
 
   const loadEdgeStatus = async () => {
     try {
-      const status = await EdgeVisionEngine.getStatus();
-      setEdgeStatus(status);
+      if (EdgeVisionEngine && typeof EdgeVisionEngine.getStatus === 'function') {
+        const status = await EdgeVisionEngine.getStatus();
+        setEdgeStatus(status);
+      }
     } catch {}
   };
 
@@ -47,7 +49,9 @@ export default function SettingsScreen() {
 
   const handleSelectModel = async (modelId: string) => {
     try {
-      await EdgeVisionEngine.setModel(modelId);
+      if (EdgeVisionEngine?.setModel) {
+        await EdgeVisionEngine.setModel(modelId);
+      }
       await loadEdgeStatus();
     } catch (e: any) {
       Alert.alert('Error', e?.message || 'Failed to switch model');
@@ -58,9 +62,11 @@ export default function SettingsScreen() {
     setIsInstallingModel(true);
     setInstallProgress(0);
     try {
-      await EdgeVisionEngine.installModel(edgeStatus?.selectedModelId, (pct) => {
-        setInstallProgress(pct);
-      });
+      if (EdgeVisionEngine?.installModel) {
+        await EdgeVisionEngine.installModel(edgeStatus?.selectedModelId, (pct) => {
+          setInstallProgress(pct);
+        });
+      }
       await loadEdgeStatus();
       Alert.alert('Model Installed', 'Model assets cached locally. Ready for offline inference!');
     } catch (e: any) {
@@ -80,7 +86,9 @@ export default function SettingsScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: async () => {
-            await EdgeVisionEngine.deleteModel();
+            if (EdgeVisionEngine?.deleteModel) {
+              await EdgeVisionEngine.deleteModel();
+            }
             await loadEdgeStatus();
             Alert.alert('Done', 'Cached model weights cleared.');
           },

@@ -120,3 +120,24 @@ export const CULINARY_KNOWLEDGE_BASE: Record<
   chicken: { category: 'Meat & Seafood', shelfLifeDays: 2, defaultUnit: 'pack' },
   juice: { category: 'Beverage', shelfLifeDays: 7, defaultUnit: 'bottle' },
 };
+
+export interface CulinaryClassItem {
+  id: number;
+  name: string;
+  category: string;
+  shelfLifeDays: number;
+  defaultUnit: string;
+}
+
+export const CULINARY_CLASSES: CulinaryClassItem[] = [
+  { id: 0, name: 'Baby Spinach', category: 'Produce', shelfLifeDays: 3, defaultUnit: 'bag (150g)' },
+  { id: 1, name: 'Eggs (Organic)', category: 'Dairy & Egg', shelfLifeDays: 14, defaultUnit: 'large' },
+  { id: 2, name: 'Milk', category: 'Dairy / Alt', shelfLifeDays: 7, defaultUnit: '1L' },
+  { id: 3, name: 'Greek Yogurt', category: 'Dairy & Egg', shelfLifeDays: 7, defaultUnit: '500g tub' },
+  { id: 4, name: 'Cheddar Cheese', category: 'Dairy', shelfLifeDays: 14, defaultUnit: '200g block' },
+  { id: 5, name: 'Red Bell Pepper', category: 'Produce', shelfLifeDays: 7, defaultUnit: 'whole' },
+  { id: 6, name: 'Strawberry Jam', category: 'Pantry', shelfLifeDays: 60, defaultUnit: 'pouch' },
+  { id: 7, name: 'Butter', category: 'Dairy & Egg', shelfLifeDays: 30, defaultUnit: 'pack' },
+  { id: 8, name: 'Carrots', category: 'Produce', shelfLifeDays: 14, defaultUnit: 'bag' },
+  { id: 9, name: 'Mustard', category: 'Pantry', shelfLifeDays: 60, defaultUnit: 'bottle' },
+];

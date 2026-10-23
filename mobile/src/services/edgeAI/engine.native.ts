@@ -13,9 +13,9 @@ import {
   EDGE_MODEL_CATALOG,
   DEFAULT_EDGE_MODEL_ID,
   CULINARY_KNOWLEDGE_BASE,
+  CULINARY_CLASSES,
 } from './catalog';
 import { RecognizedItemReview } from '@/types';
-import { CULINARY_CLASSES } from './engine.web';
 import { runNeuralClassification, BUNDLED_NEURAL_HEAD } from './neuralInference';
 
 const STORAGE_KEY_SELECTED_MODEL = '@fridgeflow_selected_edge_model';
@@ -24,11 +24,23 @@ const STORAGE_KEY_INSTALLED_MODELS = '@fridgeflow_installed_edge_models';
 export class NativeEdgeVisionEngine implements IEdgeVisionEngine {
   private selectedModelId: string = DEFAULT_EDGE_MODEL_ID;
   private isModelLoaded: boolean = false;
-  private modelsDir: Directory;
+  private modelsDir: Directory | null = null;
 
   constructor() {
-    this.modelsDir = new Directory(Paths.document, 'models');
     this.initStorage();
+  }
+
+  private getModelsDirectory(): Directory | null {
+    if (!this.modelsDir) {
+      try {
+        if (Paths && Paths.document) {
+          this.modelsDir = new Directory(Paths.document, 'models');
+        }
+      } catch (e) {
+        console.warn('Paths.document not accessible yet:', e);
+      }
+    }
+    return this.modelsDir;
   }
 
   private async initStorage() {
@@ -37,8 +49,9 @@ export class NativeEdgeVisionEngine implements IEdgeVisionEngine {
       if (saved && EDGE_MODEL_CATALOG[saved]) {
         this.selectedModelId = saved;
       }
-      if (!this.modelsDir.exists) {
-        this.modelsDir.create();
+      const dir = this.getModelsDirectory();
+      if (dir && !dir.exists) {
+        dir.create();
       }
     } catch {}
   }
@@ -125,8 +138,11 @@ export class NativeEdgeVisionEngine implements IEdgeVisionEngine {
     }
 
     try {
-      const modelFile = new File(this.modelsDir, `${targetId}.bin`);
-      modelFile.write(JSON.stringify({ modelId: targetId, timestamp: Date.now(), config }));
+      const dir = this.getModelsDirectory();
+      if (dir) {
+        const modelFile = new File(dir, `${targetId}.bin`);
+        modelFile.write(JSON.stringify({ modelId: targetId, timestamp: Date.now(), config }));
+      }
     } catch (e) {
       console.warn('App-private model write error:', e);
     }
@@ -149,9 +165,12 @@ export class NativeEdgeVisionEngine implements IEdgeVisionEngine {
     await this.setModelInstalledLocally(this.selectedModelId, false);
     await this.unloadModel();
     try {
-      const modelFile = new File(this.modelsDir, `${this.selectedModelId}.bin`);
-      if (modelFile.exists) {
-        modelFile.delete();
+      const dir = this.getModelsDirectory();
+      if (dir) {
+        const modelFile = new File(dir, `${this.selectedModelId}.bin`);
+        if (modelFile.exists) {
+          modelFile.delete();
+        }
       }
     } catch {}
   }
@@ -345,3 +364,14 @@ export class NativeEdgeVisionEngine implements IEdgeVisionEngine {
     return classResults.map((r) => r.confidence);
   }
 }
+
+let engineInstance: IEdgeVisionEngine | null = null;
+
+export function getEdgeVisionEngine(): IEdgeVisionEngine {
+  if (!engineInstance) {
+    engineInstance = new NativeEdgeVisionEngine();
+  }
+  return engineInstance;
+}
+
+export const EdgeVisionEngine: IEdgeVisionEngine = getEdgeVisionEngine();

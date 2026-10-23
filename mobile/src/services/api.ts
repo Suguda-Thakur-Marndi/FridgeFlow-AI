@@ -36,12 +36,15 @@ export interface ScanResult {
 export const ApiService = {
   async checkHealth(): Promise<{ healthy: boolean; model?: string; message?: string; isEdge?: boolean }> {
     try {
-      const status = await EdgeVisionEngine.getStatus();
-      return {
-        healthy: true,
-        model: `${status.modelConfig.name} (${status.engine.toUpperCase()})`,
-        isEdge: true,
-      };
+      if (EdgeVisionEngine && typeof EdgeVisionEngine.getStatus === 'function') {
+        const status = await EdgeVisionEngine.getStatus();
+        return {
+          healthy: true,
+          model: `${status.modelConfig.name} (${status.engine.toUpperCase()})`,
+          isEdge: true,
+        };
+      }
+      return { healthy: true, model: 'Offline Demo Mode', isEdge: false };
     } catch (err: any) {
       return { healthy: false, message: err?.message || 'Local AI engine error' };
     }
@@ -54,7 +57,7 @@ export const ApiService = {
     }
 
     // Default to 100% On-Device Edge AI (Zero Cloud / No Remote API)
-    if (!options?.forceRemote) {
+    if (!options?.forceRemote && EdgeVisionEngine && typeof EdgeVisionEngine.analyzeFridgeImage === 'function') {
       try {
         const localResult = await EdgeVisionEngine.analyzeFridgeImage(imageUri, {
           onProgress: (_stage, pct) => {

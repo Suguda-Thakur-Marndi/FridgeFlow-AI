@@ -3,6 +3,9 @@ import { IEdgeVisionEngine } from './types';
 import { WebEdgeVisionEngine } from './engine.web';
 import { NativeEdgeVisionEngine } from './engine.native';
 
+export { WebEdgeVisionEngine } from './engine.web';
+export { NativeEdgeVisionEngine } from './engine.native';
+
 let engineInstance: IEdgeVisionEngine | null = null;
 
 export function getEdgeVisionEngine(): IEdgeVisionEngine {

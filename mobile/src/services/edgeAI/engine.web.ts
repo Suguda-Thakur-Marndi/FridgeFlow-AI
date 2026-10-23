@@ -12,25 +12,15 @@ import {
   EDGE_MODEL_CATALOG,
   DEFAULT_EDGE_MODEL_ID,
   CULINARY_KNOWLEDGE_BASE,
+  CULINARY_CLASSES,
 } from './catalog';
 import { RecognizedItemReview } from '@/types';
+
+export { CULINARY_CLASSES } from './catalog';
 
 const CACHE_NAME = 'fridgeflow_edge_models_v1';
 const STORAGE_KEY_SELECTED_MODEL = 'fridgeflow_selected_edge_model';
 const STORAGE_KEY_INSTALLED_MODELS = 'fridgeflow_installed_edge_models';
-
-export const CULINARY_CLASSES = [
-  { id: 0, name: 'Baby Spinach', category: 'Produce', shelfLifeDays: 3, defaultUnit: 'bag (150g)' },
-  { id: 1, name: 'Eggs (Organic)', category: 'Dairy & Egg', shelfLifeDays: 14, defaultUnit: 'large' },
-  { id: 2, name: 'Milk', category: 'Dairy / Alt', shelfLifeDays: 7, defaultUnit: '1L' },
-  { id: 3, name: 'Greek Yogurt', category: 'Dairy & Egg', shelfLifeDays: 7, defaultUnit: '500g tub' },
-  { id: 4, name: 'Cheddar Cheese', category: 'Dairy', shelfLifeDays: 14, defaultUnit: '200g block' },
-  { id: 5, name: 'Red Bell Pepper', category: 'Produce', shelfLifeDays: 7, defaultUnit: 'whole' },
-  { id: 6, name: 'Strawberry Jam', category: 'Pantry', shelfLifeDays: 60, defaultUnit: 'pouch' },
-  { id: 7, name: 'Butter', category: 'Dairy & Egg', shelfLifeDays: 30, defaultUnit: 'pack' },
-  { id: 8, name: 'Carrots', category: 'Produce', shelfLifeDays: 14, defaultUnit: 'bag' },
-  { id: 9, name: 'Mustard', category: 'Pantry', shelfLifeDays: 60, defaultUnit: 'bottle' },
-];
 
 export class WebEdgeVisionEngine implements IEdgeVisionEngine {
   private selectedModelId: string = DEFAULT_EDGE_MODEL_ID;
@@ -553,3 +543,14 @@ export class WebEdgeVisionEngine implements IEdgeVisionEngine {
     });
   }
 }
+
+let engineInstance: IEdgeVisionEngine | null = null;
+
+export function getEdgeVisionEngine(): IEdgeVisionEngine {
+  if (!engineInstance) {
+    engineInstance = new WebEdgeVisionEngine();
+  }
+  return engineInstance;
+}
+
+export const EdgeVisionEngine: IEdgeVisionEngine = getEdgeVisionEngine();
